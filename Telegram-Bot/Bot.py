@@ -5,6 +5,7 @@ import telepot
 import os
 import serial
 import struct
+from config import *
 from picamera import PiCamera
 from time import sleep
 from threading import Lock
@@ -212,7 +213,7 @@ def handle(msg):
 		
 		
 print(("s08").encode()+b'\n')	
-bot = telepot.Bot('660105356:AAE6t8sryjvqdctISLUvGqLJe7ondnRxeE8')
+bot = telepot.Bot(telegram_token)
 bot.message_loop(handle)
 
 
