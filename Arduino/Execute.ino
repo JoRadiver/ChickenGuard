@@ -9,7 +9,7 @@ void toggle_light();
    Geschlossen 0
    Geöffnet    1
    Schliessend 2
-   Öfnnend     3
+   Öffnend     3
 */
 
 //Deklarationen
