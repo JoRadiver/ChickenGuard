@@ -144,30 +144,65 @@ def handle(msg):
 					print( '----------------------------------------' )
 					bot.sendMessage(chat_id, "Bild oeffnen oder senden fehlgeschlagen.")
 
-			elif 'Log' in command:
-				while ser.in_waiting > 0:
-						print("arduino garbage: "+ser.readline().decode('utf8'))
-				ser.write(("LOG" + '\n').encode())
-				print("LOG sent")
-				input = ser.readline().decode('utf8')+'\U0000000A'+ser.readline().decode('utf8')+'\U0000000A'+ser.readline().decode('utf8')+'\U0000000A'+ser.readline().decode('utf8')+'\U0000000A'+ser.readline().decode('utf8')+'\U0000000A'+ser.readline().decode('utf8')
-				print("got response")
-				bot.sendMessage(chat_id, input)
-			elif 'Open' in command:
-				ser.write(("O_DOOR" + '\n').encode())
-			elif 'Close' in command:
-				ser.write(("C_DOOR" + '\n').encode())
-			elif 'Licht an' in command:
-				ser.write(("L_ON" + '\n').encode()) 
-			elif 'Licht aus' in command:
-				ser.write(("L_OF" + '\n').encode())
+			elif 'Schliessen' in command:
+				with serial_lock:
+					ser.write(("s03").encode()+b'\n')
+					bot.sendMessage(chat_id, 'Türchen schliesst.')
+			elif 'Öfnnen' in command:
+				with serial_lock:
+					ser.write(("s02").encode()+b'\n')
+					bot.sendMessage(chat_id, 'Türchen öffnet') 
 			elif 'Refresh' in command:
-				ser.write(("REFR" + '\n').encode())
-			elif 'Temperatur' in command:
-				while ser.in_waiting > 0:
-						ser.readline()
-				ser.write(("TEMP" + '\n').encode())
-				input = ser.readline()
-				bot.sendMessage(chat_id, input)
+				with serial_lock:
+					ser.write(("s08").encode()+b'\n')
+					bot.sendMessage(chat_id, 'Suche Satelliten.')
+			elif 'Licht an' in command:
+				with serial_lock:
+					ser.write(("s06").encode()+b'\n')
+					bot.sendMessage(chat_id, 'Licht an.')
+			elif 'Licht aus' in command:
+				with serial_lock:
+					ser.write(("s07").encode()+b'\n')
+					bot.sendMessage(chat_id, 'Licht aus.')
+			elif 'Zaun an' in command:
+				with serial_lock:
+					ser.write(("s04").encode()+b'\n')
+					bot.sendMessage(chat_id, 'Zaun an')
+			elif 'Zaun aus' in command:
+				with serial_lock:
+					ser.write(("s05").encode()+b'\n')
+					bot.sendMessage(chat_id, 'Zaun aus')
+			elif 'Temparatur' in command:
+				with serial_lock:
+					while ser.in_waiting > 0:
+						log_message(str(ser.readline(),'ascii'),write = True)
+					ser.write(("s09").encode()+b'\n')
+					bot.sendMessage(chat_id, log_message(str(ser.readline(),'ascii')))
+			elif 'Log' in command:
+				#Here i should make sure that nothing 
+				#is waiting from the Arduino
+				#so that the next two Serial lines are the Arduinos 
+				#respoonce to the "LOG" command.
+				#and that hanlde is the only 
+				#function talking to the Serial port now.
+				with serial_lock:
+					while ser.in_waiting > 0:
+						line = str(ser.readline(),'ascii')
+						if len(line)>1:
+							log_message(line,write = True)
+					ser.write(("s01").encode()+b'\n')
+					i=0
+					while ser.in_waiting == 0 and i<50:
+						sleep(1)
+						i+=1
+					line = str(ser.readline(),'ascii')
+					if len(line) >1:
+						bot.sendMessage(chat_id, "LOG\U0000000A" + log_message(line))
+					else:
+						print("no response from Arduino in 50s")
+						bot.sendMessage(chat_id, "Keine Antwort erhalten in 50 Sekunden")
+				#The Arduinos response is now saved as one string 
+				#and sent to the User.
 			elif 'start' in command:
 				bot.sendMessage(user_id, "Welcome", reply_markup = full_keyboard)
 				
@@ -191,5 +226,12 @@ while True:
 	#The log updates are only once a hour
 	sleep(3)
 	#here i need to make sure it does not collide with the other thread.
+	with serial_lock:
+		while ser.in_waiting > 0:
+			try:
+				line = struct.unpack(ser.readline())
+				log_message(line,write = True)
+			except UnicodeDecodeError:
+				print("Bad Arduino Data")
 		
 		
