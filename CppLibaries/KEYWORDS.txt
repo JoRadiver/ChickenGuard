@@ -1,0 +1,8 @@
+ExtendedOutput	KEYWORD1
+
+DebugManager KEYWORD1
+deb	KEYWORD3
+dprint	KEYWORD2
+dprintln	KEYWORD2
+stopDebug	KEYWORD2
+startDebug	KEYWORD2
