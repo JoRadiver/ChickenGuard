@@ -40,41 +40,41 @@ def log_message(str, write = False):
 			letter = e[0]
 			e = e[1:]
 			if letter == 'T':
-				line = "Türchen: "
+				line = "*Türchen:*     "
 				words = ["Geschlossen","Offen","Schliesst","Öffnet", "Fehler"]
 				line += words[int(e)]
 			elif letter == 'Z':
-				line = "Zaun: "
+				line = "*Zaun:*        "
 				words = ["Ein","Aus"]
 				line += words[int(e)]
 			elif letter == 'L':
-				line = "Licht: "
+				line = "*Licht:*       "
 				words = ["Ein","Aus"]
 				line += words[int(e)]
 			elif letter == 'C':
-				line = "Temparatur: "
+				line = "*Temparatur:*  "
 				line += float(e) + "°C"
 				if write :
 					Tf.write(float(e))
 			elif letter == 'a':
-				line = "Systemzeit: "
+				line = "*Systemzeit:*  "
 				line += time_from_unix_int(int(e))
 				line += "    " + date_from_unix_int(int(e))
 			elif letter == 'r':
-				line = "Öffnungszeit: "
+				line = "*Öffnungszeit:* "
 				line += time_from_unix_int(int(e))
 			elif letter == 's':
-				line = "Schliesszeit: "
+				line = "*Schliesszeit:* "
 				line += time_from_unix_int(int(e))
 			elif letter == 'X':
-				line = "Fehler: "
+				line = "*Fehler:*       "
 				line += e
 			elif len(e)>0:
-				line = "Andere: "
+				line = "*Andere:*       "
 				line += e
 			text += line + "\U0000000A"
 		if write:
-			lf.write(text)
+			lf.write(text.strip('*'))
 		return text
 
 def authenticate(chat_id):
@@ -177,7 +177,7 @@ def handle(msg):
 					while ser.in_waiting > 0:
 						log_message(str(ser.readline(),'ascii'),write = True)
 					ser.write(("s09").encode()+b'\n')
-					bot.sendMessage(chat_id, log_message(str(ser.readline(),'ascii')))
+					bot.sendMessage(chat_id, log_message(str(ser.readline(),'ascii')), parse_mode = 'Markdown')
 			elif 'Log' in command:
 				#Here i should make sure that nothing 
 				#is waiting from the Arduino
@@ -197,7 +197,7 @@ def handle(msg):
 						i+=1
 					line = str(ser.readline(),'ascii')
 					if len(line) >1:
-						bot.sendMessage(chat_id, "LOG\U0000000A" + log_message(line))
+						bot.sendMessage(chat_id, "LOG\U0000000A" + log_message(line), parse_mode = 'Markdown')
 					else:
 						print("no response from Arduino in 50s")
 						bot.sendMessage(chat_id, "Keine Antwort erhalten in 50 Sekunden")
