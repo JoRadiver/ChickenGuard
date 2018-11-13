@@ -200,7 +200,7 @@ def handle(msg):
 						bot.sendMessage(chat_id, "LOG\U0000000A" + log_message(line), parse_mode = 'Markdown')
 					else:
 						print("no response from Arduino in 50s")
-						bot.sendMessage(chat_id, "Keine Antwort erhalten in 50 Sekunden")
+						bot.sendMessage(chat_id, "*Fehler:* Keine Antwort erhalten in 50 Sekunden")
 				#The Arduinos response is now saved as one string 
 				#and sent to the User.
 			elif 'start' in command:
@@ -211,15 +211,20 @@ def handle(msg):
 			print("Unauthorized Acces.")
 
 		
-		
-print(("s08").encode()+b'\n')	
-bot = telepot.Bot(telegram_token)
-bot.message_loop(handle)
-
 
 ser = serial.Serial("/dev/ttyUSB0", 9600, timeout = 2)
+print("Serial Port ready.")
+startMSG = None
+while startMSG != "Arduino ready":
+	while ser.in_waiting < 3:
+		pass
+	startMSG = struct.unpack(ser.readline())
+print("Arduino ready.")
 
-print( 'I am listening ...')
+bot = telepot.Bot(telegram_token)
+bot.message_loop(handle)
+print("Bot ready.")
+
 		
 while True:
 	#anything to make it not run at full speed (Recommendations welcome)

@@ -148,10 +148,8 @@ void setup() {
 
   Serial.begin(9600);
   deb.activate();
-  deb.dprintln(F("STUP"));
+  deb.dprintln(F("START"));
   delay(100);
-  deb.dprintln(F("Arduino Booting Up"));
-  
   gps_setup();
   
   //gps_refresh();
@@ -185,9 +183,6 @@ void setup() {
   ist.toorstatus = 1;
   delay(1000);
 #endif
-  
-
-  deb.dprintln(F("EOM"));
   deb.stop();
   setTime(0);
   zeiten.loop_zeit = now();
@@ -196,7 +191,7 @@ void setup() {
   zeiten.display_wecker = zeiten.loop_zeit;
   zeiten.PIreport_wecker = zeiten.loop_zeit;
 
-
+Serial.println("Arduino ready")
   
 }
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//
