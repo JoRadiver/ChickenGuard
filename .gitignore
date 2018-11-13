@@ -1,2 +1,5 @@
 config.py
-users.py
+users.txt
+logfile.py
+celsiusfile.py
+__pycache__

@@ -5,7 +5,7 @@ import telepot
 import os
 import serial
 import struct
-from config import *
+import config
 from picamera import PiCamera
 from time import sleep
 from threading import Lock
@@ -13,13 +13,45 @@ ser = None
 bot = None
 from telepot.namedtuple import InlineKeyboardButton, InlineKeyboardMarkup
 from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton
+#=========================================================================#
 
+
+
+#===============================GLOBALS===================================#
 serial_lock = Lock()
-
-
 camera = PiCamera()
-
 photo = None
+#=========================================================================#
+
+
+
+#==========================TELEGRAM KEYBOARDS=============================#
+guest_Keyboard = ReplyKeyboardMarkup(
+								keyboard=[
+									[KeyboardButton(text = '\U0001F4F8 Bild'),KeyboardButton(text='\U0001F4D6 Log')],
+									[KeyboardButton(text = "\U0001F4A1 Authenticate")]
+								]
+							)
+
+login_Keyboard = ReplyKeyboardMarkup(
+								keyboard=[
+									[KeyboardButton(text = '1'), KeyboardButton(text="2"), KeyboardButton(text="3")],
+									[KeyboardButton(text = '4'), KeyboardButton(text="5"), KeyboardButton(text="6")],
+									[KeyboardButton(text = '7'), KeyboardButton(text="8"), KeyboardButton(text="9")],
+									[KeyboardButton(text = 'Authenticate'), KeyboardButton(text = 'Back')]
+								]
+							)
+							
+full_keyboard = ReplyKeyboardMarkup(
+								keyboard=[
+									[KeyboardButton(text = '\U0001F4D6 Log'), KeyboardButton(text="\U0001F4F8 Bild")],
+									[KeyboardButton(text = '\U00002B06 Open Door'), KeyboardButton(text="\U00002B07 Close Door")],
+									[KeyboardButton(text = '\U00002600 Licht an'), KeyboardButton(text="\U0001F312 Licht aus")],
+									[KeyboardButton(text = '/start'), KeyboardButton(text="\U0000267B Refresh")]
+								]
+							)
+							
+#=========================================================================#
 
 def time_from_unix_int(time):
 	return datetime.fromtimestamp(time).strftime('%H:%M')
@@ -45,11 +77,11 @@ def log_message(str, write = False):
 				line += words[int(e)]
 			elif letter == 'Z':
 				line = "*Zaun:*        "
-				words = ["Ein","Aus"]
+				words = ["An","Aus"]
 				line += words[int(e)]
 			elif letter == 'L':
 				line = "*Licht:*       "
-				words = ["Ein","Aus"]
+				words = ["An","Aus"]
 				line += words[int(e)]
 			elif letter == 'C':
 				line = "*Temparatur:*  "
@@ -77,34 +109,28 @@ def log_message(str, write = False):
 			lf.write(text.strip('*'))
 		return text
 
-def authenticate(chat_id):
-	return True
+
 	
+user_list = []
+
+def read_users():
+	global user_list
+	with open('users.txt', 'r') as f:
+		
+		for user in f.readlines():
+			user = user.strip('\n')
+			user_list.append(user)
 	
-guest_Keyboard = ReplyKeyboardMarkup(
-								keyboard=[
-									[KeyboardButton(text = '\U0001F4F8 Bild 	'),KeyboardButton(text='\U0001F4D6 Log')],
-									[KeyboardButton(text = "\U0001F4A1 Authenticate")]
-								]
-							)
+def cache_user(user):
+	with open('user_chache.txt', 'r+') as f:
+		f.write(user)
 	
-login_Keyboard = ReplyKeyboardMarkup(
-								keyboard=[
-									[KeyboardButton(text = '1'), KeyboardButton(text="2"), KeyboardButton(text="3")],
-									[KeyboardButton(text = '4'), KeyboardButton(text="5"), KeyboardButton(text="6")],
-									[KeyboardButton(text = '7'), KeyboardButton(text="8"), KeyboardButton(text="9")],
-									[KeyboardButton(text = 'Authenticate'), KeyboardButton(text = 'Back')]
-								]
-							)
-full_keyboard = ReplyKeyboardMarkup(
-								keyboard=[
-									[KeyboardButton(text = '\U0001F4D6 Log'), KeyboardButton(text="\U0001F4F8 Bild")],
-									[KeyboardButton(text = '\U00002B06 Open Door'), KeyboardButton(text="\U00002B07 Close Door")],
-									[KeyboardButton(text = '\U00002600 Licht an'), KeyboardButton(text="\U0001F312 Licht aus")],
-									[KeyboardButton(text = '/start'), KeyboardButton(text="\U0000267B Refresh")]
-								]
-							)
+def authenticate(user):
+	if user in user_list:
+		return true
+	return false
 	
+
 	
 	
 #Command Codes For Chicken Door:
@@ -126,7 +152,8 @@ def handle(msg):
 		global serial_lock
 		chat_id = msg['chat']['id']
 		command = msg['text']
-		if authenticate(chat_id):
+		user_id = chat_id
+		if authenticate(user_id):
 			print( 'Command Received: %s' % command)
 			if command == '/start':
 				bot.sendMessage(chat_id, 'welcome')
@@ -208,6 +235,7 @@ def handle(msg):
 				
 			print("Command Processed.")
 		else:
+			cache_user(user_id)
 			print("Unauthorized Acces.")
 
 		
