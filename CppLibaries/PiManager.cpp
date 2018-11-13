@@ -5,15 +5,15 @@
 PiManager::PiManager(HardwareSerial* _pi, Zeiten* zt, ExtendedZustand* _ist, Zustand* _soll, DebugManager* _deb): pi(_pi), zeiten(zt), ist(_ist), soll(_soll), deb(_deb){}
 
 
-const char N_ERROR = 'X'
-const char N_QUICK = 'Q'
-const char N_TOOR = 'T'
-const char N_ZAUN = 'Z'
-const char N_LICHT = 'L'
-const char N_TEMP = 'T'
-const char NU_AKTUELL = 'a'
-const char NU_SONNENAUFGANG = 'r'
-const char NU_SONNENUNTERGANG = 's'
+const char N_ERROR = 'X';
+const char N_QUICK = 'Q';
+const char N_TOOR = 'T';
+const char N_ZAUN = 'Z';
+const char N_LICHT = 'L';
+const char N_TEMP = 'T';
+const char NU_AKTUELL = 'a';
+const char NU_SONNENAUFGANG = 'r';
+const char NU_SONNENUNTERGANG = 's';
 
 void PiManager::log(){
 	if( TOOR_AKTIV ){
@@ -41,7 +41,7 @@ void PiManager::printToor(){
 }
 void PiManager::printZaun(){
 	pi->print(N_ZAUN);
-	pi->print(ist->zaunstatus)
+	pi->print(ist->zaunstatus);
 	pi->print(';');	
 }
 void PiManager::printLicht(){
@@ -55,9 +55,9 @@ void PiManager::printTemp(){
 	pi->print(';');
 }
 void PiManager::printZeit(){
-	pi->print(N_UHRZEIT);	pi->print(NU_AKTUELL);  pi_print(zeiten->loop_zeit); pi->print(';');
-	pi->print(N_UHRZEIT); pi->print(NU_SONNENAUFGANG); pi_print(zeiten->Sonnenaufgang); pi->print(';');
-	pi->print(N_UHRZEIT); pi->print(NU_SONNENUNTERGANG); pi->print(zeiten->Sonnenuntergang); pi->print(';');
+	pi->print(NU_AKTUELL);  pi->print(zeiten->loop_zeit); pi->print(';');
+	pi->print(NU_SONNENAUFGANG); pi->print(zeiten->Sonnenaufgang); pi->print(';');
+	pi->print(NU_SONNENUNTERGANG); pi->print(zeiten->Sonnenuntergang); pi->print(';');
 }
 
 void PiManager::quick_report(char reason, String message){
@@ -70,11 +70,11 @@ void PiManager::quick_report(char reason, String message){
 
 void PiManager::handleInput(){
 	if(pi->read() != 's'){
-		String cache = '';
+		String cache = "";
 		while(pi->available()){
-			String += pi->read();
+			cache += pi->read();
 		}
-		quick_report(N_ERROR, cache)
+		quick_report(N_ERROR, cache);
 		return;
 	}
 	switch(pi->read()){
@@ -118,11 +118,11 @@ void PiManager::handleInput(){
 					zeiten->Standard_wecker = zeiten->loop_zeit;
 					return;
 				case '9': //Temparature
-					printTemp()
-					pi->println()
+					printTemp();
+					pi->println();
 					return;
 				default:
-					quick_report(N_ERROR, "M")
+					quick_report(N_ERROR, "M");
 					return;
 			}
 			return;
@@ -135,12 +135,12 @@ void PiManager::handleInput(){
 					deb->stop();
 					return;
 				default:
-					quick_report(N_ERROR, "M")
+					quick_report(N_ERROR, "M");
 					return;
 			}
 			return;
 		default:
-			quick_report(N_ERROR, "M")
+			quick_report(N_ERROR, "M");
 			return;
 	}
 }
