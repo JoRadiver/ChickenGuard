@@ -8,6 +8,7 @@
 #define MOTOR_TYPE 0  //define 1 for stepper, any other integer for dc
 #define PI_MODULE 1  //Define 1 to include
 #define DISPLAY_MODULE 0  //Define 1 to include
+#define NO_GPS_HARDWARE 0 //Dies muss 0 sein sonst ist der testcode aktiviert
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//
 //================================CODE SELECTORS=====================================// 
 
