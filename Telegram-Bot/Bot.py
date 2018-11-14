@@ -195,9 +195,9 @@ def handle(msg):
 			elif 'Temparatur' in command:
 				with serial_lock:
 					while ser.in_waiting > 0:
-						log_message(str(ser.readline(),'ascii'),write = True)
+						log_message(str(ser.readline(),'utf-8'),write = True)
 					ser.write(("s09").encode()+b'\n')
-					bot.sendMessage(chat_id, log_message(str(ser.readline(),'ascii')), parse_mode = 'Markdown')
+					bot.sendMessage(chat_id, log_message(str(ser.readline(),'utf-8')), parse_mode = 'Markdown')
 			elif 'Log' in command:
 				#Here i should make sure that nothing 
 				#is waiting from the Arduino
@@ -207,7 +207,7 @@ def handle(msg):
 				#function talking to the Serial port now.
 				with serial_lock:
 					while ser.in_waiting > 0:
-						line = str(ser.readline(),'ascii')
+						line = str(ser.readline(),'utf-8')
 						if len(line)>1:
 							log_message(line,write = True)
 					ser.write(("s01").encode()+b'\n')
@@ -215,7 +215,7 @@ def handle(msg):
 					while ser.in_waiting == 0 and i<50:
 						sleep(1)
 						i+=1
-					line = str(ser.readline(),'ascii')
+					line = str(ser.readline(),'utf-8')
 					if len(line) >1:
 						bot.sendMessage(chat_id, "LOG\U0000000A" + log_message(line), parse_mode = 'Markdown')
 					else:
@@ -233,13 +233,16 @@ def handle(msg):
 
 		
 
-ser = serial.Serial("/dev/ttyUSB0", 9600, timeout = 2)
+ser = serial.Serial("/dev/ttyUSB0", 9600)
 print("Serial Port ready.")
+
 startMSG = None
+print('Arduino Gibberish: ')
 while startMSG != "Arduino ready":
 	while ser.in_waiting < 3:
 		pass
-	startMSG = struct.unpack(ser.readline())
+	startMSG = ser.readline().decode('utf-8')
+	print(startMSG)
 print("Arduino ready.")
 
 bot = telepot.Bot(telegram_token)
@@ -255,7 +258,7 @@ while True:
 	with serial_lock:
 		while ser.in_waiting > 0:
 			try:
-				line = struct.unpack(ser.readline(), 'ascii')
+				line = struct.unpack(ser.readline(), 'utf-8')
 				log_message(line,write = True)
 			except UnicodeDecodeError:
 				print("Bad Arduino Data")
