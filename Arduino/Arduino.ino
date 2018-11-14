@@ -192,7 +192,7 @@ void setup() {
   zeiten.display_wecker = zeiten.loop_zeit;
   zeiten.PIreport_wecker = zeiten.loop_zeit;
 
-Serial.println("Arduino ready")
+Serial.println("Arduino ready");
   
 }
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//

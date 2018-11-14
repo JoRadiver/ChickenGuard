@@ -113,22 +113,15 @@ def log_message(str, write = False):
 	
 user_list = []
 
-def read_users():
-	global user_list
-	with open('users.txt', 'r') as f:
-		
-		for user in f.readlines():
-			user = user.strip('\n')
-			user_list.append(user)
 	
 def cache_user(user):
-	with open('user_chache.txt', 'r+') as f:
+	with open('users.txt', 'r+') as f:
 		f.write(user)
 	
 def authenticate(user):
-	if user in user_list:
-		return true
-	return false
+	if user in config.users:
+		return True
+	return False
 	
 
 	
@@ -262,7 +255,7 @@ while True:
 	with serial_lock:
 		while ser.in_waiting > 0:
 			try:
-				line = struct.unpack(ser.readline())
+				line = struct.unpack(ser.readline(), 'ascii')
 				log_message(line,write = True)
 			except UnicodeDecodeError:
 				print("Bad Arduino Data")
