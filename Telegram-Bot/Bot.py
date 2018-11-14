@@ -178,7 +178,7 @@ def handle(msg):
 		
 		
 print(("s08").encode()+b'\n')	
-bot = telepot.Bot(telegram_token)
+bot = telepot.Bot(config.telegram_token)
 bot.message_loop(handle)
 
 
