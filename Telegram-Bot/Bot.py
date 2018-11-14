@@ -236,16 +236,16 @@ def handle(msg):
 ser = serial.Serial("/dev/ttyUSB0", 9600)
 print("Serial Port ready.")
 
-startMSG = None
+startMSG = ""
 print('Arduino Gibberish: ')
-while startMSG != "Arduino ready":
+while not "Arduino ready" in startMSG:
 	while ser.in_waiting < 3:
 		pass
-	startMSG = ser.readline().decode('utf-8')
+	startMSG = ser.readline().decode('utf-8').strip('\n')
 	print(startMSG)
 print("Arduino ready.")
 
-bot = telepot.Bot(telegram_token)
+bot = telepot.Bot(config.telegram_token)
 bot.message_loop(handle)
 print("Bot ready.")
 
