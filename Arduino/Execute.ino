@@ -73,6 +73,7 @@ void calc_door() {
     if (ist.toorstatus % 2 == 0) {
       floating_state = false;
       ist.toorstatus = 0;
+      deb.dprintln("arrived bot");
       exout.digitalSet(LED_1, LOW);
       exout.digitalSet(LED_2, HIGH);
     } else {

@@ -25,13 +25,13 @@ void PiManager::log(){
 	if( LICHT_AKTIV ){
 		printLicht();
 	}
-	pi->println();
 	if( TEMP_AKTIV ){
 		printTemp();
 	}
 	if( ZEIT_AKTIV ){
 		printZeit();
 	}
+	pi->println();
 }
 
 void PiManager::printToor(){
@@ -69,79 +69,82 @@ void PiManager::quick_report(char reason, String message){
 
 
 void PiManager::handleInput(){
-	if(pi->read() != 's'){
-		String cache = "";
-		while(pi->available()){
-			cache += pi->read();
+	//We will loop until we find a starting 's' character
+	while (pi->peek() != 's'){
+		if (pi->available() < 4){
+			return; //To few bytes available, lets return to the program until we have new bytes
 		}
-		quick_report(N_ERROR, cache);
-		return;
+		pi->read(); //Skim of any bytes which had no starting character
 	}
-	switch(pi->read()){
+	pi->read(); //consume the starting character
+	switch(pi->read()){  //Read the first character
 		case '0':	//First Set
-			switch(pi->read()){
+			switch(pi->read()){ //Read the second character
 				case '1': //Log
 					this->log();
-					return;
+					break;
 				case '2': //OpenDoor
 					soll->toorstatus = 1;
 					zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 					zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
-					return;
+					break;
 				case '3': //CloseDoor
 					soll->toorstatus = 0;
 					zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 					zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
-					return;
+					break;
 				case '4': //Fence On
 					soll->zaunstatus = 1;
 					zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 					zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
-					return;
+					break;
 				case '5': //Fence Off
 					soll->zaunstatus = 0;
 					zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 					zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
-					return;
+					break;
 				case '6': //Light On
 					soll->lichtstatus = 1;
 					zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 					zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
-					return;
+					break;
 				case '7': //Light Off
 					soll->lichtstatus = 0;
 					zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 					zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
-					return;
+					break;
 				case '8': //Refresh
 					zeiten->GPS_wecker = zeiten->loop_zeit;
 					zeiten->Standard_wecker = zeiten->loop_zeit;
-					return;
+					break;
 				case '9': //Temparature
 					printTemp();
 					pi->println();
-					return;
+					break;
 				default:
 					quick_report(N_ERROR, "M");
 					return;
 			}
-			return;
+			break;
 		case '1':
 			switch(pi->read()){
 				case '0':
 					deb->activate();
-					return;
+					break;
 				case '1':
 					deb->stop();
-					return;
+					break;
 				default:
 					quick_report(N_ERROR, "M");
 					return;
 			}
-			return;
+			break;
 		default:
 			quick_report(N_ERROR, "M");
 			return;
+	}
+	while(pi->available() && pi->peek() != 's'){
+		pi->read();//skimm of any excess that is sent before the next s char is sent. 's' char must remain on the serial.
 	}
 }
 
