@@ -166,38 +166,39 @@ def handle(msg):
 
 			elif 'Schliessen' in command:
 				with serial_lock:
-					ser.write(("s03").encode()+b'\n')
+					ser.write(("s03").encode())
 					bot.sendMessage(chat_id, 'Türchen schliesst.')
 			elif 'Öfnnen' in command:
 				with serial_lock:
-					ser.write(("s02").encode()+b'\n')
+					ser.write(("s02").encode())
 					bot.sendMessage(chat_id, 'Türchen öffnet') 
 			elif 'Refresh' in command:
 				with serial_lock:
-					ser.write(("s08").encode()+b'\n')
+					ser.write(("s08").encode())
 					bot.sendMessage(chat_id, 'Suche Satelliten.')
 			elif 'Licht an' in command:
 				with serial_lock:
-					ser.write(("s06").encode()+b'\n')
+					ser.write(("s06").encode())
 					bot.sendMessage(chat_id, 'Licht an.')
 			elif 'Licht aus' in command:
 				with serial_lock:
-					ser.write(("s07").encode()+b'\n')
+					ser.write(("s07").encode())
 					bot.sendMessage(chat_id, 'Licht aus.')
 			elif 'Zaun an' in command:
 				with serial_lock:
-					ser.write(("s04").encode()+b'\n')
+					ser.write(("s04").encode())
 					bot.sendMessage(chat_id, 'Zaun an')
 			elif 'Zaun aus' in command:
 				with serial_lock:
-					ser.write(("s05").encode()+b'\n')
+					ser.write(("s05").encode())
 					bot.sendMessage(chat_id, 'Zaun aus')
 			elif 'Temparatur' in command:
 				with serial_lock:
 					while ser.in_waiting > 0:
-						log_message(str(ser.readline(),'utf-8'),write = True)
-					ser.write(("s09").encode()+b'\n')
-					bot.sendMessage(chat_id, log_message(str(ser.readline(),'utf-8')), parse_mode = 'Markdown')
+						log_message(ser.readline().decode('utf-8').strip('\n'),write = True)
+					ser.write(("s09").encode())
+					line = ser.readline().decode('utf-8').strip('\n')
+					bot.sendMessage(chat_id, log_message(line), parse_mode = 'Markdown')
 			elif 'Log' in command:
 				#Here i should make sure that nothing 
 				#is waiting from the Arduino
@@ -207,15 +208,15 @@ def handle(msg):
 				#function talking to the Serial port now.
 				with serial_lock:
 					while ser.in_waiting > 0:
-						line = str(ser.readline(),'utf-8')
+						line = ser.readline().decode('utf-8').strip('\n')
 						if len(line)>1:
 							log_message(line,write = True)
-					ser.write(("s01").encode()+b'\n')
+					ser.write(("s01").encode())
 					i=0
 					while ser.in_waiting == 0 and i<50:
 						sleep(1)
 						i+=1
-					line = str(ser.readline(),'utf-8')
+					line = ser.readline().decode('utf-8').strip('\n')
 					if len(line) >1:
 						bot.sendMessage(chat_id, "LOG\U0000000A" + log_message(line), parse_mode = 'Markdown')
 					else:
@@ -258,7 +259,7 @@ while True:
 	with serial_lock:
 		while ser.in_waiting > 0:
 			try:
-				line = struct.unpack(ser.readline(), 'utf-8')
+				line = ser.readline().decode('utf-8').strip('\n')
 				log_message(line,write = True)
 			except UnicodeDecodeError:
 				print("Bad Arduino Data")
