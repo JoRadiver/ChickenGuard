@@ -16,7 +16,6 @@ from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton
 #=========================================================================#
 
 
-
 #===============================GLOBALS===================================#
 serial_lock = Lock()
 camera = PiCamera()
@@ -24,28 +23,11 @@ photo = None
 #=========================================================================#
 
 
-
 #==========================TELEGRAM KEYBOARDS=============================#
-guest_Keyboard = ReplyKeyboardMarkup(
-								keyboard=[
-									[KeyboardButton(text = '\U0001F4F8 Bild'),KeyboardButton(text='\U0001F4D6 Log')],
-									[KeyboardButton(text = "\U0001F4A1 Authenticate")]
-								]
-							)
-
-login_Keyboard = ReplyKeyboardMarkup(
-								keyboard=[
-									[KeyboardButton(text = '1'), KeyboardButton(text="2"), KeyboardButton(text="3")],
-									[KeyboardButton(text = '4'), KeyboardButton(text="5"), KeyboardButton(text="6")],
-									[KeyboardButton(text = '7'), KeyboardButton(text="8"), KeyboardButton(text="9")],
-									[KeyboardButton(text = 'Authenticate'), KeyboardButton(text = 'Back')]
-								]
-							)
-							
 full_keyboard = ReplyKeyboardMarkup(
 								keyboard=[
-									[KeyboardButton(text = '\U0001F4D6 Log'), KeyboardButton(text="\U0001F4F8 Bild")],
-									[KeyboardButton(text = '\U00002B06 Open Door'), KeyboardButton(text="\U00002B07 Close Door")],
+									[KeyboardButton(text = '\U0001F4D6 Status'), KeyboardButton(text="\U0001F4F8 Bild")],
+									[KeyboardButton(text = '\U00002B06 Öffnen'), KeyboardButton(text="\U00002B07 Schliessen")],
 									[KeyboardButton(text = '\U00002600 Licht an'), KeyboardButton(text="\U0001F312 Licht aus")],
 									[KeyboardButton(text = '/start'), KeyboardButton(text="\U0000267B Refresh")]
 								]
@@ -111,9 +93,6 @@ def log_message(str, write = False):
 
 
 	
-user_list = []
-
-	
 def cache_user(user):
 	with open('users.txt', 'r+') as f:
 		f.write(user)
@@ -122,10 +101,7 @@ def authenticate(user):
 	if user in config.users:
 		return True
 	return False
-	
 
-	
-	
 #Command Codes For Chicken Door:
 # 01: Log
 # 02: OpenDoor
@@ -199,7 +175,7 @@ def handle(msg):
 					ser.write(("s09").encode())
 					line = ser.readline().decode('utf-8').strip('\n')
 					bot.sendMessage(chat_id, log_message(line), parse_mode = 'Markdown')
-			elif 'Log' in command:
+			elif 'Status' in command:
 				#Here i should make sure that nothing 
 				#is waiting from the Arduino
 				#so that the next two Serial lines are the Arduinos 
@@ -225,7 +201,7 @@ def handle(msg):
 				#The Arduinos response is now saved as one string 
 				#and sent to the User.
 			elif 'start' in command:
-				bot.sendMessage(user_id, "Welcome", reply_markup = full_keyboard)
+				bot.sendMessage(user_id, "Willkommen", reply_markup = full_keyboard)
 				
 			print("Command Processed.")
 		else:
