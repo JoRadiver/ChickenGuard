@@ -1,4 +1,5 @@
 import time
+from gpiozero import LED
 import random
 from datetime import datetime
 import telepot
@@ -21,6 +22,7 @@ serial_lock = RLock()
 camera = PiCamera()
 photo = None
 manuellmodus = False
+IR_led = LED(14)
 #=========================================================================#
 
 
@@ -168,10 +170,12 @@ def handle(msg):
 				bot.sendMessage(chat_id, 'welcome')
 			elif 'Bild' in command:
 				try:
+					IR_led.on()
 					camera.start_preview()
 					sleep(2)
 					camera.capture('/home/pi/bild.jpg')
 					camera.stop_preview()
+					IR_led.off()
 					with open('/home/pi/bild.jpg', 'rb') as photo: #oeffne das bild nur wenn es gebraucht wird
 						bot.sendPhoto(chat_id, photo)
 				except Exception as e:	#falls es fehlgeschlagen ist, melde das.
