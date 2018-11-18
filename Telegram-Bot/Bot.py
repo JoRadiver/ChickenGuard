@@ -8,7 +8,7 @@ import struct
 import config
 from picamera import PiCamera
 from time import sleep
-from threading import Lock
+from threading import RLock
 ser = None
 bot = None
 from telepot.namedtuple import InlineKeyboardButton, InlineKeyboardMarkup
@@ -17,7 +17,7 @@ from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton
 
 
 #===============================GLOBALS===================================#
-serial_lock = Lock()
+serial_lock = RLock()
 camera = PiCamera()
 photo = None
 manuellmodus = False
@@ -38,7 +38,7 @@ fehler_keyboard = ReplyKeyboardMarkup(
 								keyboard=[
 									[KeyboardButton(text = 'Fehlerlog'), KeyboardButton(text="\U0001F4F8 Bild")],
 									[KeyboardButton(text = 'Aufrollen'), KeyboardButton(text="Abrollen"), KeyboardButton(text = "Stop")],
-									[KeyboardButton(text = 'Warte +60min')]
+									[KeyboardButton(text = 'Warte +60min')],
 									[KeyboardButton(text="\U0000267B Zurück")]
 								]
 							)
@@ -106,12 +106,13 @@ def log_message(str, write = False):
 				line = "*Fehler:*		"
 				line += e
 				if config.master_chat_id != None:
+					print(line)
 					bot.sendMessage(config.master_chat_id, line, reply_markup = fehler_keyboard)
 			elif letter == 'P':
 				line = "*Nachricht:*		"
 				line += e
 				if config.master_chat_id != None:
-					bot.sendMessage(config.master_chat_id, line, reply_markup = fehler_keyboard)
+					bot.sendMessage(config.master_chat_id, line)
 					line = ""
 			elif len(e)>0:
 				line = "*Andere:*		"
@@ -124,7 +125,7 @@ def log_message(str, write = False):
 
 def send_to_arduino(tosend):
 	with serial_lock:
-		ser.write((tosend).encode())
+		ser.write((tosend).encode()+ b'\n')
 					
 def cache_user(user):
 	with open('users.txt', 'r+') as f:
@@ -213,22 +214,26 @@ def handle(msg):
 				#respoonce to the "LOG" command.
 				#and that hanlde is the only 
 				#function talking to the Serial port now.
+				print(" trying serial lock:")
 				with serial_lock:
+					print(" got serial lock")
 					while ser.in_waiting > 0:
 						line = ser.readline().decode('utf-8').strip('\n')
 						if len(line)>1:
 							log_message(line,write = True)
-					ser.write(("s01").encode())
+					send_to_arduino("s01")
 					i=0
-					while ser.in_waiting == 0 and i<50:
+					print(" arduino data skimmed off and command sent")
+					while ser.in_waiting < 1 and i<50:
 						sleep(1)
 						i+=1
+						print(" .")
 					line = ser.readline().decode('utf-8').strip('\n')
 					if len(line) >1:
 						bot.sendMessage(chat_id, "LOG\U0000000A" + log_message(line), parse_mode = 'Markdown')
 					else:
-						print("no response from Arduino in 50s")
-						bot.sendMessage(chat_id, "*Fehler:* Keine Antwort erhalten in 50 Sekunden")
+						print(" no response from Arduino in 50s")
+						bot.sendMessage(chat_id, "*Fehler:* Keine Antwort erhalten in 50 Sekunden", parse_mode = 'Markdown')
 				#The Arduinos response is now saved as one string 
 				#and sent to the User.
 			elif 'Manuell' in command and chat_id == config.master_chat_id:
@@ -245,7 +250,7 @@ def handle(msg):
 			elif 'Stop' in command and chat_id == config.master_chat_id:
 				send_to_arduino("s24")
 				bot.sendMessage(chat_id, "Motor Stop")
-			elif 'Warte +60 min' in command:
+			elif 'Warte +60 min' in command  and chat_id == config.master_chat_id:
 				send_to_arduino("s25")
 				bot.sendMessage(chat_id, "Arduino Wartet Unendlich")
 			elif 'Zurück' in command and chat_id == config.master_chat_id:
@@ -260,7 +265,7 @@ def handle(msg):
 
 		
 
-ser = serial.Serial("/dev/ttyUSB0", 9600)
+ser = serial.Serial("/dev/ttyUSB0", 9600, timeout = 2)
 print("Serial Port ready.")
 
 startMSG = ""
