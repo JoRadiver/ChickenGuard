@@ -213,12 +213,13 @@ void fehlerbehebung(int type) {
 //returns true if user has ordered exit, zero if timeout.
 bool manual_control() {
   unsigned long timeout = now() + 900;
-  deb.dprintln("manual_mode");
+  Serial.println("Hm_init;");
   dc_stop();
   unsigned long blink_time = millis();
   bool led_state = false;
   delay(2000);
-  while (digitalRead(INTERRUPT_PIN) || digitalRead(DIGITAL_I_3)) {
+  bool end_manual = false;
+  while (!digitalRead(INTERRUPT_PIN) && !digitalRead(DIGITAL_I_3) && !end_manual){
     if (millis() > blink_time) {
       exout.digitalSet(LED_1, !led_state);
       exout.digitalSet(LED_2, !led_state);
@@ -234,13 +235,52 @@ bool manual_control() {
       dc_stop();
     }
     if (timeout < now()) {
-      deb.dprintln("time_exit");
+      deb.dprintln("Pt_end_manual;");
+	  deb.stop();
       return false;
     }
+	if (Serial.available()>3){
+		if (Serial.peek() == 's'){
+			Serial.read();
+			switch(Serial.read()){
+				case 1:
+					Serial.print('P');
+					Serial.print('O');
+					Serial.print(!digitalRead(INTERRUPT_PIN));
+					Serial.print('U');
+					Serial.print(!digitalRead(DIGITAL_I_3));
+					Serial.println(';');
+					break;
+				case 2:
+					dc_start(1); break;
+				case 3:
+					dc_start(0); break;
+				case 4:
+					dc_stop(); break;
+				case 5:
+					timeout += 3600; break;
+				case 6:
+					end_manual = true; break;
+				default:
+					break;
+			}
+		}
+		else{
+			while (Serial.available()){
+				if (Serial.peek() == 's'){
+					break;
+				}else{
+					Serial.read();
+				}
+			}
+				
+		}
+		
+	}
   }
   dc_stop();
   delay(2000);
-  deb.dprintln("maunal_exit");
+  deb.dprintln("Pm_end_manual;");
   if (zeiten.Tageszeit % 2) {
     ist.toorstatus = 0;
   } else {

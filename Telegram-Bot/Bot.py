@@ -20,6 +20,7 @@ from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton
 serial_lock = Lock()
 camera = PiCamera()
 photo = None
+manuellmodus = False
 #=========================================================================#
 
 
@@ -33,7 +34,23 @@ full_keyboard = ReplyKeyboardMarkup(
 								]
 							)
 							
+fehler_keyboard = ReplyKeyboardMarkup(
+								keyboard=[
+									[KeyboardButton(text = 'Fehlerlog'), KeyboardButton(text="\U0001F4F8 Bild")],
+									[KeyboardButton(text = 'Aufrollen'), KeyboardButton(text="Abrollen"), KeyboardButton(text = "Stop")],
+									[KeyboardButton(text = 'Warte +60min')]
+									[KeyboardButton(text="\U0000267B Zurück")]
+								]
+							)
+							
+yesno_keyboard = ReplyKeyboardMarkup(
+								keyboard=[
+									[KeyboardButton(text = 'Ja'), KeyboardButton(text="Nein")],
+								]
+							)
 #=========================================================================#
+
+
 
 def time_from_unix_int(time):
 	return datetime.fromtimestamp(time).strftime('%H:%M')
@@ -51,18 +68,20 @@ def log_message(str, write = False):
 		text = ""
 		for e in list:
 			line = ""
+			if len(e) < 2 :
+				continue
 			letter = e[0]
 			e = e[1:]
 			if letter == 'T':
-				line = "*Türchen:*     "
+				line = "*Türchen:*	   "
 				words = ["Geschlossen","Offen","Schliesst","Öffnet", "Fehler"]
 				line += words[int(e)]
 			elif letter == 'Z':
-				line = "*Zaun:*        "
+				line = "*Zaun:*		   "
 				words = ["An","Aus"]
 				line += words[int(e)]
 			elif letter == 'L':
-				line = "*Licht:*       "
+				line = "*Licht:*	   "
 				words = ["An","Aus"]
 				line += words[int(e)]
 			elif letter == 'C':
@@ -73,7 +92,7 @@ def log_message(str, write = False):
 			elif letter == 'a':
 				line = "*Systemzeit:*  "
 				line += time_from_unix_int(int(e))
-				line += "    " + date_from_unix_int(int(e))
+				line += "	 " + date_from_unix_int(int(e))
 			elif letter == 'r':
 				line = "*Öffnungszeit:* "
 				line += time_from_unix_int(int(e))
@@ -81,10 +100,21 @@ def log_message(str, write = False):
 				line = "*Schliesszeit:* "
 				line += time_from_unix_int(int(e))
 			elif letter == 'X':
-				line = "*Fehler:*       "
+				line = "*Fehler:*		"
 				line += e
+			elif letter == 'H':
+				line = "*Fehler:*		"
+				line += e
+				if config.master_chat_id != None:
+					bot.sendMessage(config.master_chat_id, line, reply_markup = fehler_keyboard)
+			elif letter == 'P':
+				line = "*Nachricht:*		"
+				line += e
+				if config.master_chat_id != None:
+					bot.sendMessage(config.master_chat_id, line, reply_markup = fehler_keyboard)
+					line = ""
 			elif len(e)>0:
-				line = "*Andere:*       "
+				line = "*Andere:*		"
 				line += e
 			text += line + "\U0000000A"
 		if write:
@@ -92,7 +122,10 @@ def log_message(str, write = False):
 		return text
 
 
-	
+def send_to_arduino(tosend):
+	with serial_lock:
+		ser.write((tosend).encode())
+					
 def cache_user(user):
 	with open('users.txt', 'r+') as f:
 		f.write(user)
@@ -114,7 +147,13 @@ def authenticate(user):
 # 09: Temparature
 # 10: DebugEnable
 # 11: DebugDisable
-
+# 20: Start Manual Mode
+# 21: Get Error Log
+# 22: Roll Up (in Manual mode)
+# 23: Roll Down (in manual mode)
+# 24: Stop Motor (in manual mode)
+# 25: Warte 60 min länger (in manual mode)
+# 26: Exit Manual Mode
 #The handle Function is called by the telepot thread, 
 #whenever a message is received from Telegram
 def handle(msg):
@@ -134,45 +173,37 @@ def handle(msg):
 					camera.stop_preview()
 					with open('/home/pi/bild.jpg', 'rb') as photo: #oeffne das bild nur wenn es gebraucht wird
 						bot.sendPhoto(chat_id, photo)
-				except Exception as e:  #falls es fehlgeschlagen ist, melde das.
+				except Exception as e:	#falls es fehlgeschlagen ist, melde das.
 					print( '----failed to send or capture picture---' )
 					print(e)
 					print( '----------------------------------------' )
 					bot.sendMessage(chat_id, "Bild oeffnen oder senden fehlgeschlagen.")
-
-			elif 'Schliessen' in command:
-				with serial_lock:
-					ser.write(("s03").encode())
+			elif 'Schliessen' in command:				
+					send_to_arduino("s03")
 					bot.sendMessage(chat_id, 'Türchen schliesst.')
-			elif 'Öfnnen' in command:
-				with serial_lock:
-					ser.write(("s02").encode())
+			elif 'Öfnnen' in command:				
+					send_to_arduino("s02")
 					bot.sendMessage(chat_id, 'Türchen öffnet') 
-			elif 'Refresh' in command:
-				with serial_lock:
-					ser.write(("s08").encode())
+			elif 'Refresh' in command:				
+					send_to_arduino("s08")
 					bot.sendMessage(chat_id, 'Suche Satelliten.')
-			elif 'Licht an' in command:
-				with serial_lock:
-					ser.write(("s06").encode())
+			elif 'Licht an' in command:				
+					send_to_arduino("s06")
 					bot.sendMessage(chat_id, 'Licht an.')
-			elif 'Licht aus' in command:
-				with serial_lock:
-					ser.write(("s07").encode())
+			elif 'Licht aus' in command:				
+					send_to_arduino("s07")
 					bot.sendMessage(chat_id, 'Licht aus.')
 			elif 'Zaun an' in command:
-				with serial_lock:
-					ser.write(("s04").encode())
+					send_to_arduino("s04")
 					bot.sendMessage(chat_id, 'Zaun an')
 			elif 'Zaun aus' in command:
-				with serial_lock:
-					ser.write(("s05").encode())
+					send_to_arduino("s05")
 					bot.sendMessage(chat_id, 'Zaun aus')
 			elif 'Temparatur' in command:
 				with serial_lock:
 					while ser.in_waiting > 0:
 						log_message(ser.readline().decode('utf-8').strip('\n'),write = True)
-					ser.write(("s09").encode())
+					send_to_arduino("s09")
 					line = ser.readline().decode('utf-8').strip('\n')
 					bot.sendMessage(chat_id, log_message(line), parse_mode = 'Markdown')
 			elif 'Status' in command:
@@ -200,9 +231,28 @@ def handle(msg):
 						bot.sendMessage(chat_id, "*Fehler:* Keine Antwort erhalten in 50 Sekunden")
 				#The Arduinos response is now saved as one string 
 				#and sent to the User.
+			elif 'Manuell' in command and chat_id == config.master_chat_id:
+				bot.sendMessage(chat_id, "Manueller modus aktiviert", reply_markup = fehler_keyboard)
+				send_to_arduino("s20")
+			elif 'Fehlerlog' in command and chat_id == config.master_chat_id:
+				send_to_arduino("s21")
+			elif 'Aufrollen' in command and chat_id == config.master_chat_id:
+				send_to_arduino("s22")
+				bot.sendMessage(chat_id, "Rolle Auf")
+			elif 'Abrollen' in command and chat_id == config.master_chat_id:
+				send_to_arduino("s23")
+				bot.sendMessage(chat_id, "Rolle Ab")
+			elif 'Stop' in command and chat_id == config.master_chat_id:
+				send_to_arduino("s24")
+				bot.sendMessage(chat_id, "Motor Stop")
+			elif 'Warte +60 min' in command:
+				send_to_arduino("s25")
+				bot.sendMessage(chat_id, "Arduino Wartet Unendlich")
+			elif 'Zurück' in command and chat_id == config.master_chat_id:
+				send_to_arduino("s26")
+				bot.sendMessage(user_id, "Manueller modus beendet", reply_markup = full_keyboard)
 			elif 'start' in command:
-				bot.sendMessage(user_id, "Willkommen", reply_markup = full_keyboard)
-				
+				bot.sendMessage(user_id, "Willkommen", reply_markup = full_keyboard)	
 			print("Command Processed.")
 		else:
 			cache_user(user_id)

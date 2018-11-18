@@ -67,12 +67,13 @@ void PiManager::quick_report(char reason, String message){
 }
 
 
-
-void PiManager::handleInput(){
+//returns 0 if its a normal command
+//returns  a nmuber when its a special command like manual mode
+int PiManager::handleInput(){
 	//We will loop until we find a starting 's' character
 	while (pi->peek() != 's'){
 		if (pi->available() < 4){
-			return; //To few bytes available, lets return to the program until we have new bytes
+			return 0; //To few bytes available, lets return to the program until we have new bytes
 		}
 		pi->read(); //Skim of any bytes which had no starting character
 	}
@@ -123,7 +124,7 @@ void PiManager::handleInput(){
 					break;
 				default:
 					quick_report(N_ERROR, "M");
-					return;
+					return 0;
 			}
 			break;
 		case '1':
@@ -136,12 +137,19 @@ void PiManager::handleInput(){
 					break;
 				default:
 					quick_report(N_ERROR, "M");
-					return;
+					return 0;
 			}
 			break;
+		case '2':
+			switch(pi->read()){
+				case '0':
+					return -1; //return 1 to indicate manual mode
+				default:
+					return 0;
+			}
 		default:
 			quick_report(N_ERROR, "M");
-			return;
+			return 0;
 	}
 	while(pi->available() && pi->peek() != 's'){
 		pi->read();//skimm of any excess that is sent before the next s char is sent. 's' char must remain on the serial.

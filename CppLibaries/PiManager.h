@@ -22,7 +22,7 @@ public:
 	PiManager(HardwareSerial* _pi, Zeiten* zt, ExtendedZustand* _ist, Zustand* _soll, DebugManager* _deb);
 	void log();
 	void quick_report(char reason, String message); //Reason is always a short Capital letters message. message can be any string.
-	void handleInput();
+	int handleInput();
 private:
 	void printToor();
 	void printZaun();
