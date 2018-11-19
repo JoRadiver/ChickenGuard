@@ -257,11 +257,19 @@ def handle(msg):
 			elif 'Warte +60 min' in command  and chat_id == config.master_chat_id:
 				send_to_arduino("s25")
 				bot.sendMessage(chat_id, "Arduino Wartet Unendlich")
+			elif 'Logfile' in command:
+				with serial_lock:
+					with open('logfile.txt', 'rb') as file:
+						bot.sendDocument(chat_id, file)
+			elif 'Tempfile' in command:
+				with serial_lock:
+					with open('celsiusfile.txt') as file:
+						bot.sendDocument(chat_id, file)
 			elif 'Zurück' in command and chat_id == config.master_chat_id:
 				send_to_arduino("s26")
 				bot.sendMessage(user_id, "Manueller modus beendet", reply_markup = full_keyboard)
 			elif 'start' in command:
-				bot.sendMessage(user_id, "Willkommen", reply_markup = full_keyboard)	
+				bot.sendMessage(user_id, "Willkommen", reply_markup = full_keyboard)
 			print("Command Processed.")
 		else:
 			cache_user(user_id)
