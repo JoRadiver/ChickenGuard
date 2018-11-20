@@ -186,7 +186,7 @@ def handle(msg):
 			elif 'Schliessen' in command:				
 					send_to_arduino("s03")
 					bot.sendMessage(chat_id, 'Türchen schliesst.')
-			elif 'Öfnnen' in command:				
+			elif 'Öffnen' in command:				
 					send_to_arduino("s02")
 					bot.sendMessage(chat_id, 'Türchen öffnet') 
 			elif 'Refresh' in command:				
