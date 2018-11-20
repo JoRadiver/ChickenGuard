@@ -147,6 +147,16 @@ int PiManager::handleInput(){
 				default:
 					return 0;
 			}
+		case '9':
+			switch(pi->read()){
+				case '9':
+					pi->print('S'); //Start Letter
+					pi->print('R'); //Ready
+					pi->print(';'); 
+				default:
+					quick_report(N_ERROR, "M");
+					return 0;
+			}
 		default:
 			quick_report(N_ERROR, "M");
 			return 0;

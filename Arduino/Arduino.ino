@@ -180,15 +180,15 @@ void setup() {
   delay(2000);
   analogWrite(PWM_1, 40);
   analogWrite(PWM_2, 40);
-  deb.dprintln("Pwm Set");
+  deb.dprintln(" Pwm Set");
   delay(1000);
   dc_start(1);
   delay(100);
   dc_start(1);
-  deb.dprintln("öffne");
+  deb.dprintln(" öffne");
   while(digitalRead(OBEN_ENDSCHALTER));
   dc_stop();
-  deb.dprintln("OPEN");
+  deb.dprintln(" OPEN");
   ist.toorstatus = 1;
   delay(1000);
 #endif
@@ -201,7 +201,7 @@ void setup() {
   zeiten.display_wecker = zeiten.loop_zeit;
   zeiten.PIreport_wecker = zeiten.loop_zeit;
 
-Serial.println("Arduino ready");
+Serial.println(" Setup done");
   
 }
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//

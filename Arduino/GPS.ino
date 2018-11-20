@@ -42,6 +42,9 @@ void gpsRefresh() {
     setTime(gps.hour, gps.minute, gps.seconds, gps.day, gps.month, 1997);
     differenz = now() - differenz;
     zeiten.adjustTimes(differenz);
+	Serial.print('D');
+	Serial.print(differenz);
+	Serial.println(';');
     //Bei Groben abweichungen von der Systemzeit neu berechnen
     if (differenz > 3|| differenz < -2) {
       

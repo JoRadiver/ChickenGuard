@@ -8,16 +8,14 @@ import serial
 import struct
 import config
 from picamera import PiCamera
-from time import sleep
 from threading import RLock
-ser = None
-bot = None
-from telepot.namedtuple import InlineKeyboardButton, InlineKeyboardMarkup
 from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton
 #=========================================================================#
 
 
 #===============================GLOBALS===================================#
+ser = None
+bot = None
 serial_lock = RLock()
 camera = PiCamera()
 photo = None
@@ -74,24 +72,24 @@ def log_message(str, write = False):
 				continue
 			letter = e[0]
 			e = e[1:]
-			if letter == 'T':
+			if letter == 'T':  #Türchen
 				line = "*Türchen:*	   "
 				words = ["Geschlossen","Offen","Schliesst","Öffnet", "Fehler"]
 				line += words[int(e)]
-			elif letter == 'Z':
+			elif letter == 'Z': #Zaun
 				line = "*Zaun:*		   "
 				words = ["An","Aus"]
 				line += words[int(e)]
-			elif letter == 'L':
+			elif letter == 'L':  #Licht
 				line = "*Licht:*	   "
 				words = ["An","Aus"]
 				line += words[int(e)]
-			elif letter == 'C':
+			elif letter == 'C':  #Temparatur
 				line = "*Temparatur:*  "
 				line += float(e) + "°C"
 				if write :
 					Tf.write(float(e))
-			elif letter == 'a':
+			elif letter == 'a':  #
 				line = "*Systemzeit:*  "
 				line += time_from_unix_int(int(e))
 				line += "	 " + date_from_unix_int(int(e))
@@ -101,6 +99,8 @@ def log_message(str, write = False):
 			elif letter == 's':
 				line = "*Schliesszeit:* "
 				line += time_from_unix_int(int(e))
+			elif letter == 'S':
+				line = "*Arduino hat gestartet*"
 			elif letter == 'X':
 				line = "*Fehler:*		"
 				line += e
@@ -116,6 +116,19 @@ def log_message(str, write = False):
 				if config.master_chat_id != None:
 					bot.sendMessage(config.master_chat_id, line)
 					line = ""
+			elif letter == 'D': #Differenz
+				line = "*Zeit Aktualisiert:* "
+				shifttime = int(e)
+				if shifttime < 60:
+					line += "Zeit hat sich um wenige sekunden verändert."
+				elif shifttime >= 60:
+					line += "Zeit hat sich um "
+					line += str(int(e)//60)
+					line += " Minuten verändert."
+				elif shifttime > 3600:
+					line += "Zeit wurde eingestellt."
+			elif letter == ' ': #Those messages are not logged.
+				pass
 			elif len(e)>0:
 				line = "*Andere:*		"
 				line += e
@@ -164,6 +177,8 @@ def handle(msg):
 		chat_id = msg['chat']['id']
 		command = msg['text']
 		user_id = chat_id
+		print()
+		print('------------------------------------------')
 		if authenticate(user_id):
 			print( 'Command Received: %s' % command)
 			if command == '/start':
@@ -172,7 +187,7 @@ def handle(msg):
 				try:
 					IR_led.on()
 					camera.start_preview()
-					sleep(2)
+					time.sleep(2)
 					camera.capture('/home/pi/bild.jpg')
 					camera.stop_preview()
 					IR_led.off()
@@ -229,7 +244,7 @@ def handle(msg):
 					i=0
 					print(" arduino data skimmed off and command sent")
 					while ser.in_waiting < 1 and i<50:
-						sleep(1)
+						time.sleep(1)
 						i+=1
 						print(" .")
 					line = ser.readline().decode('utf-8').strip('\n')
@@ -273,31 +288,33 @@ def handle(msg):
 			print("Command Processed.")
 		else:
 			cache_user(user_id)
-			print("Unauthorized Acces.")
-
+			print("Unauthorized Acces from:"+str(user_id))
+		print('------------------------------------------')
+		
 		
 
 ser = serial.Serial("/dev/ttyUSB0", 9600, timeout = 2)
+print('################# BOT STARTING #################')
 print("Serial Port ready.")
 
 startMSG = ""
-print('Arduino Gibberish: ')
-while not "Arduino ready" in startMSG:
+print('Waiting for Arduino Boot: ')
+send_to_arduino('s99')
+while not "Setup Done" in startMSG:
 	while ser.in_waiting < 3:
 		pass
 	startMSG = ser.readline().decode('utf-8').strip('\n')
-	print(startMSG)
+	print('  Arduino reports: ' startMSG)
 print("Arduino ready.")
-
 bot = telepot.Bot(config.telegram_token)
 bot.message_loop(handle)
 print("Bot ready.")
-
+print('###############################################')
 		
 while True:
 	#anything to make it not run at full speed (Recommendations welcome)
 	#The log updates are only once a hour
-	sleep(3)
+	time.sleep(3)
 	#here i need to make sure it does not collide with the other thread.
 	with serial_lock:
 		while ser.in_waiting > 0:
