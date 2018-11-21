@@ -153,10 +153,12 @@ int PiManager::handleInput(){
 					pi->print('S'); //Start Letter
 					pi->print('R'); //Ready
 					pi->print(';'); 
+					return 0;
 				default:
 					quick_report(N_ERROR, "M");
 					return 0;
 			}
+			return 0;
 		default:
 			quick_report(N_ERROR, "M");
 			return 0;

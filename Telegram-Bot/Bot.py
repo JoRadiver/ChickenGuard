@@ -63,7 +63,8 @@ def date_from_unix_int(time):
 	
 def log_message(str, write = False):
 	with open("logfile.txt",'r+') as lf, open("celsiusfile.txt", 'r+') as Tf :
-		print("Received from ardiuno: "+str)
+		print()
+		print(" - Received from ardiuno: "+str)
 		list = str.split(';')		
 		text = ""
 		for e in list:
@@ -108,7 +109,6 @@ def log_message(str, write = False):
 				line = "*Fehler:*		"
 				line += e
 				if config.master_chat_id != None:
-					print(line)
 					bot.sendMessage(config.master_chat_id, line, reply_markup = fehler_keyboard)
 			elif letter == 'P':
 				line = "*Nachricht:*		"
@@ -140,6 +140,7 @@ def log_message(str, write = False):
 
 def send_to_arduino(tosend):
 	with serial_lock:
+		print(" => Sent to Arduino: "+tosend)
 		ser.write((tosend).encode()+ b'\n')
 					
 def cache_user(user):
@@ -294,17 +295,24 @@ def handle(msg):
 		
 
 ser = serial.Serial("/dev/ttyUSB0", 9600, timeout = 2)
+print()
+print()
 print('################# BOT STARTING #################')
 print("Serial Port ready.")
 
 startMSG = ""
 print('Waiting for Arduino Boot: ')
 send_to_arduino('s99')
-while not "Setup Done" in startMSG:
+i = 0
+while not "SR;" in startMSG:
+	i+=1
 	while ser.in_waiting < 3:
 		pass
 	startMSG = ser.readline().decode('utf-8').strip('\n')
-	print('  Arduino reports: ' startMSG)
+	print('  Arduino reports: ' + startMSG)
+	if i == 200:
+		send_to_arduino('s99')
+	time.sleep(.1)
 print("Arduino ready.")
 bot = telepot.Bot(config.telegram_token)
 bot.message_loop(handle)
