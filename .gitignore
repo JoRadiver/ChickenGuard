@@ -3,3 +3,4 @@ users.txt
 logfile.py
 celsiusfile.py
 __pycache__
+SyncToy*.dat
