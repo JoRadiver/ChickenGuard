@@ -219,7 +219,7 @@ bool manual_control() {
   bool led_state = false;
   delay(2000);
   bool end_manual = false;
-  while !(!digitalRead(INTERRUPT_PIN) && !digitalRead(DIGITAL_I_3) && !end_manual){
+  while (!(!digitalRead(INTERRUPT_PIN) && !digitalRead(DIGITAL_I_3)) && !end_manual){
     if (millis() > blink_time) {
       exout.digitalSet(LED_1, !led_state);
       exout.digitalSet(LED_2, !led_state);
