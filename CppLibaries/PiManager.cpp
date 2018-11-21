@@ -66,7 +66,8 @@ void PiManager::quick_report(char reason, String message){
 	pi->println(';');
 }
 
-
+//Reads 4 bytes.
+//Looks in serial for 's' char
 //returns 0 if its a normal command
 //returns  a nmuber when its a special command like manual mode
 int PiManager::handleInput(){
@@ -124,7 +125,7 @@ int PiManager::handleInput(){
 					break;
 				default:
 					quick_report(N_ERROR, "M");
-					return 0;
+					break;
 			}
 			break;
 		case '1':
@@ -137,7 +138,7 @@ int PiManager::handleInput(){
 					break;
 				default:
 					quick_report(N_ERROR, "M");
-					return 0;
+					break;
 			}
 			break;
 		case '2':
@@ -145,7 +146,7 @@ int PiManager::handleInput(){
 				case '0':
 					return -1; //return 1 to indicate manual mode
 				default:
-					return 0;
+					break;
 			}
 		case '9':
 			switch(pi->read()){
@@ -153,19 +154,20 @@ int PiManager::handleInput(){
 					pi->print('S'); //Start Letter
 					pi->print('R'); //Ready
 					pi->print(';'); 
-					return 0;
+					break;
 				default:
 					quick_report(N_ERROR, "M");
-					return 0;
+					break;
 			}
-			return 0;
+			break;
 		default:
 			quick_report(N_ERROR, "M");
-			return 0;
+			break;
 	}
 	while(pi->available() && pi->peek() != 's'){
 		pi->read();//skimm of any excess that is sent before the next s char is sent. 's' char must remain on the serial.
 	}
+	return 0;
 }
 
 void PiManager::sendTime(unsigned long time){
