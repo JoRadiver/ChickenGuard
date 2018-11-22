@@ -104,7 +104,15 @@ void berechne_sonnenzeiten(unsigned long jetzt, unsigned long *zeiten) { //berec
 
   //Picode
   void PI_Calculations() {
-    pi.handleInput();
-  
+#if MOTOR_TYPE == 1
+	pi.handleInput();
+#else
+    switch(pi.handleInput()){
+		case -1:
+			manual_control();
+		default:
+			return;
+	}
+#endif
   }
 #endif

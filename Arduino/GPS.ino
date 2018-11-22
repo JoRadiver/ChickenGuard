@@ -19,6 +19,10 @@
 //POST:: Falls satelliten gefunden werden wird die Systemzeit aktualisiert
 //Bei grossen Abweichungen wird die Zeit für die Neu berechnen funtion auf 60 sekunden gestellt
 void gpsRefresh() {
+#if NO_GPS_HARDWARE == 1
+  //In no hardware mode don't refresh gps.
+  return;
+#endif
   zeiten.loop_zeit = now();
   gps.wakeup();
   gps.satellites = 0;
@@ -38,6 +42,9 @@ void gpsRefresh() {
     setTime(gps.hour, gps.minute, gps.seconds, gps.day, gps.month, 1997);
     differenz = now() - differenz;
     zeiten.adjustTimes(differenz);
+	Serial.print('D');
+	Serial.print(differenz);
+	Serial.println(';');
     //Bei Groben abweichungen von der Systemzeit neu berechnen
     if (differenz > 3|| differenz < -2) {
       
@@ -65,6 +72,9 @@ bool fast_gleich(unsigned int a, unsigned int b) {
 
 //POST:: Initialisiert die Kommunikation mit dem GPS
 void gps_setup() {
+#if NO_GPS_HARDWARE == 1
+  return;
+#endif
   deb.dprintln(F("GPS setup "));
   gps.begin(9600);                                    // Configure GPS to onlu output minimum data (location, time, fix).
   gps.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCONLY);      // Use a 1 hz, once a second, update rate.

@@ -1,4 +1,7 @@
 config.py
-users.py
+users.txt
+logfile.py
+celsiusfile.py
 __pycache__
-SyncToy*
+SyncToy*.dat
+users.py

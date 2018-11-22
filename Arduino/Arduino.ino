@@ -8,9 +8,10 @@
 #define MOTOR_TYPE 0  //define 1 for stepper, any other integer for dc
 #define PI_MODULE 1  //Define 1 to include
 #define DISPLAY_MODULE 0  //Define 1 to include
+#define NO_GPS_HARDWARE 0 //Dies muss 0 sein sonst ist der testcode aktiviert
+#define NO_IO_HARDWARE 0 //Dies muss auch 0 sein!
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//
 //================================CODE SELECTORS=====================================// 
-
 
 
 
@@ -30,7 +31,7 @@
 const int timezzone = 0;                        //Zeitzone UTC+...
 #define NACHT_VERSPAETUNG 25               //wie viele Minuten nach Sonnenuntergang soll geschlossen werden?
 #define TAG_VERFRUEHUNG 10                //wie viele Minuten vor Sonnenaufgang soll geöffnet werden?
-#define STARTZEIT 0, 0, 0, 1, 9, 1997
+#define STARTZEIT 12, 12, 12, 1, 9, 1997
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//
 //==============================TUNING VARIABLEN=====================================//
 
@@ -122,6 +123,9 @@ boolean usingInterrupt = false;
 
 #endif
 
+#if NO_IO_HARDWARE == 1
+  int war_offen = 0;
+#endif
 //Funktionsreferenzen (Deklaration in weiteren tabs)
 
 
@@ -148,12 +152,13 @@ void setup() {
 
   Serial.begin(9600);
   deb.activate();
-  deb.dprintln(F("STUP"));
+  deb.dprintln(F("START"));
   delay(100);
-  deb.dprintln(F("Arduino Booting Up"));
-  
+#if NO_GPS_HARDWARE == 1
+  deb.dprintln("NO_GPS_HARDWARE Debug mode AKTIV. PROGRAM NICHT FUNKTIONSFAEHIG!");
+#endif
   gps_setup();
-  
+
   //gps_refresh();
 
   //attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), interrupt_handling, FALLING);
@@ -166,37 +171,37 @@ void setup() {
   u8x8.setPowerSave(0);
   
 #endif
-
- #if MOTOR_TYPE == 1
+#if NO_IO_HARDWARE == 1
+  deb.dprintln("NO_IO_HARDWARE Debug mode AKTIV. PROGRAM NICHT FUNKTIONSFAEHIG!");
+#else
+#if MOTOR_TYPE == 1
 
 #else
   delay(2000);
   analogWrite(PWM_1, 40);
   analogWrite(PWM_2, 40);
-  deb.dprintln("Pwm Set");
+  deb.dprintln(" Pwm Set");
   delay(1000);
   dc_start(1);
   delay(100);
   dc_start(1);
-  deb.dprintln("öffne");
+  deb.dprintln(" öffne");
   while(digitalRead(OBEN_ENDSCHALTER));
   dc_stop();
-  deb.dprintln("OPEN");
+  deb.dprintln(" OPEN");
   ist.toorstatus = 1;
   delay(1000);
 #endif
-  
-
-  deb.dprintln(F("EOM"));
+#endif
   deb.stop();
-  setTime(0);
+  setTime(STARTZEIT);
   zeiten.loop_zeit = now();
   zeiten.GPS_wecker = zeiten.loop_zeit;
   zeiten.Standard_wecker = zeiten.loop_zeit;
   zeiten.display_wecker = zeiten.loop_zeit;
   zeiten.PIreport_wecker = zeiten.loop_zeit;
 
-
+Serial.println(" Setup done");
   
 }
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//
@@ -225,17 +230,20 @@ void loop() {
   //Picode
 #if PI_MODULE == 1
 
-  if (Serial.available() > 2) {
+  if (Serial.available() > 3) {
     deb.dprintln(F("Serial recognized"));
     PI_Calculations();    
   }
 
 #endif
 
+ #if NO_IO_HARDWARE == 1
+ #else
   //Buttons
   if(!digitalRead(INTERRUPT_PIN)&&!digitalRead(DIGITAL_I_3)){
     manual_control();
   }
+  
   else if(!digitalRead(INTERRUPT_PIN)){
     soll.toorstatus = 1;
     zeiten.GPS_wecker = zeiten.loop_zeit + INTERRUPT_OVERRIDE_TIME;
@@ -246,7 +254,7 @@ void loop() {
     zeiten.GPS_wecker = zeiten.loop_zeit + INTERRUPT_OVERRIDE_TIME;
     zeiten.Standard_wecker = zeiten.loop_zeit + INTERRUPT_OVERRIDE_TIME;
   }
-  
+#endif
 
   //Interrupt
   if (zeiten.interrupt) {
