@@ -29,11 +29,10 @@ full_keyboard = ReplyKeyboardMarkup(
 								keyboard=[
 									[KeyboardButton(text = '\U0001F4D6 Status'), KeyboardButton(text="\U0001F4F8 Bild")],
 									[KeyboardButton(text = '\U00002B06 Öffnen'), KeyboardButton(text="\U00002B07 Schliessen")],
-									[KeyboardButton(text = '\U00002600 Licht an'), KeyboardButton(text="\U0001F312 Licht aus")],
 									[KeyboardButton(text = '/start'), KeyboardButton(text="\U0000267B Refresh")]
 								]
 							)
-							
+					
 fehler_keyboard = ReplyKeyboardMarkup(
 								keyboard=[
 									[KeyboardButton(text = 'Fehlerlog'), KeyboardButton(text="\U0001F4F8 Bild")],
@@ -145,7 +144,7 @@ def send_to_arduino(tosend):
 					
 def cache_user(user):
 	with open('users.txt', 'r+') as f:
-		f.write(user)
+		f.write(str(user))
 	
 def authenticate(user):
 	if user in config.users:
@@ -182,13 +181,15 @@ def handle(msg):
 		print('------------------------------------------')
 		if authenticate(user_id):
 			print( 'Command Received: %s' % command)
-			if command == '/start':
-				bot.sendMessage(chat_id, 'welcome')
+			if 'start' in command:
+				bot.sendMessage(user_id, "Willkommen", reply_markup = full_keyboard)
 			elif 'Bild' in command:
 				try:
 					IR_led.on()
 					camera.start_preview()
 					time.sleep(2)
+					camera.vflip = True
+					camera.hflip = False
 					camera.capture('/home/pi/bild.jpg')
 					camera.stop_preview()
 					IR_led.off()
@@ -279,13 +280,11 @@ def handle(msg):
 						bot.sendDocument(chat_id, file)
 			elif 'Tempfile' in command:
 				with serial_lock:
-					with open('celsiusfile.txt') as file:
+					with open('celsiusfile.txt', 'rb') as file:
 						bot.sendDocument(chat_id, file)
 			elif 'Zurück' in command and chat_id == config.master_chat_id:
 				send_to_arduino("s26")
 				bot.sendMessage(user_id, "Manueller modus beendet", reply_markup = full_keyboard)
-			elif 'start' in command:
-				bot.sendMessage(user_id, "Willkommen", reply_markup = full_keyboard)
 			print("Command Processed.")
 		else:
 			cache_user(user_id)
@@ -306,11 +305,10 @@ send_to_arduino('s99')
 i = 0
 while not "SR;" in startMSG:
 	i+=1
-	while ser.in_waiting < 3:
-		pass
-	startMSG = ser.readline().decode('utf-8').strip('\n')
-	print('  Arduino reports: ' + startMSG)
-	if i == 200:
+	if ser.in_waiting > 3:
+		startMSG = ser.readline().decode('utf-8').strip('\n')
+		print('  Arduino reports: ' + startMSG)
+	if i == 200 or i == 300 or i == 600:
 		send_to_arduino('s99')
 	time.sleep(.1)
 print("Arduino ready.")
