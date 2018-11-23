@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import time
 from gpiozero import LED
 import random
@@ -61,7 +63,7 @@ def date_from_unix_int(time):
 	return str
 	
 def log_message(str, write = False):
-	with open("logfile.txt",'r+') as lf, open("celsiusfile.txt", 'r+') as Tf :
+	with open(os.path.join(config.workingPath, "logfile.txt"),'r+') as lf, open(os.path.join(config.workingPath,"celsiusfile.txt"), 'r+') as Tf :
 		print()
 		print(" - Received from ardiuno: "+str)
 		list = str.split(';')		
@@ -143,7 +145,7 @@ def send_to_arduino(tosend):
 		ser.write((tosend).encode()+ b'\n')
 					
 def cache_user(user):
-	with open('users.txt', 'r+') as f:
+	with open(os.path.join(config.workingPath,'users.txt'), 'r+') as f:
 		f.write(str(user))
 	
 def authenticate(user):
@@ -193,7 +195,7 @@ def handle(msg):
 					camera.capture('/home/pi/bild.jpg')
 					camera.stop_preview()
 					IR_led.off()
-					with open('/home/pi/bild.jpg', 'rb') as photo: #oeffne das bild nur wenn es gebraucht wird
+					with open(os.path.join(config.workingPath,'/home/pi/bild.jpg'), 'rb') as photo: #oeffne das bild nur wenn es gebraucht wird
 						bot.sendPhoto(chat_id, photo)
 				except Exception as e:	#falls es fehlgeschlagen ist, melde das.
 					print( '----failed to send or capture picture---' )
@@ -276,11 +278,11 @@ def handle(msg):
 				bot.sendMessage(chat_id, "Arduino Wartet Unendlich")
 			elif 'Logfile' in command:
 				with serial_lock:
-					with open('logfile.txt', 'rb') as file:
+					with open(os.path.join(config.workingPath,'logfile.txt'), 'rb') as file:
 						bot.sendDocument(chat_id, file)
 			elif 'Tempfile' in command:
 				with serial_lock:
-					with open('celsiusfile.txt', 'rb') as file:
+					with open(os.path.join(config.workingPath,'celsiusfile.txt'), 'rb') as file:
 						bot.sendDocument(chat_id, file)
 			elif 'Zurück' in command and chat_id == config.master_chat_id:
 				send_to_arduino("s26")
@@ -309,6 +311,10 @@ while not "SR;" in startMSG:
 		startMSG = ser.readline().decode('utf-8').strip('\n')
 		print('  Arduino reports: ' + startMSG)
 	if i == 200 or i == 300 or i == 600:
+		send_to_arduino('s99')
+	if i == 1800 or 'FJ ist' in startMSG:
+		i = 1200
+		send_to_arduino('s26')
 		send_to_arduino('s99')
 	time.sleep(.1)
 print("Arduino ready.")

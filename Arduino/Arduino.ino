@@ -2,7 +2,6 @@
  * This verison is for DC Motors and tries to handle errors on its own.
  * It has manual control Implemented
  */
-
 //================================CODE SELECTORS=====================================//
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//
 #define MOTOR_TYPE 0  //define 1 for stepper, any other integer for dc
@@ -152,7 +151,7 @@ void setup() {
 
   Serial.begin(9600);
   deb.activate();
-  deb.dprintln(F("START"));
+  deb.dprintln(F("START v.0007"));
   delay(100);
 #if NO_GPS_HARDWARE == 1
   deb.dprintln("NO_GPS_HARDWARE Debug mode AKTIV. PROGRAM NICHT FUNKTIONSFAEHIG!");
@@ -186,10 +185,15 @@ void setup() {
   delay(100);
   dc_start(1);
   deb.dprintln(" öffne");
-  while(digitalRead(OBEN_ENDSCHALTER));
+  while(digitalRead(OBEN_ENDSCHALTER) && digitalRead(UNTEN_ENDSCHALTER));
   dc_stop();
-  deb.dprintln(" OPEN");
-  ist.toorstatus = 1;
+  if (!digitalRead(UNTEN_ENDSCHALTER)){
+	deb.dprintln(" CLOSED");
+	ist.toorstatus = 0;
+  }else{
+	deb.dprintln(" OPEN");
+	ist.toorstatus = 1;
+  }
   delay(1000);
 #endif
 #endif

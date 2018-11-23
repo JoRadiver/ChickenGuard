@@ -219,6 +219,7 @@ bool manual_control() {
   bool led_state = false;
   delay(2000);
   bool end_manual = false;
+  bool remote_access = false;
   while (!(!digitalRead(INTERRUPT_PIN) && !digitalRead(DIGITAL_I_3)) && !end_manual){
     if (millis() > blink_time) {
       exout.digitalSet(LED_1, !led_state);
@@ -227,12 +228,16 @@ bool manual_control() {
       blink_time = millis() + 500;
       exout.push();
     }
-    if (!digitalRead(INTERRUPT_PIN)) {
+    if (!digitalRead(INTERRUPT_PIN)) {  //Upper key pressed
       dc_start(1);
-    } else if (!digitalRead(DIGITAL_I_3)) {
+	  remote_access = false;
+    } else if (!digitalRead(DIGITAL_I_3)) {  //Lower key pressed
       dc_start(0);
-    } else {
-      dc_stop();
+	  remote_access = false;
+    } else {  //stop if no key is pressed, but only if running is not a command from the pi
+		if (!remote_access){
+			dc_stop();
+		}
     }
     if (timeout < now()) {
       Serial.println("Pt_end;");
@@ -255,11 +260,20 @@ bool manual_control() {
 						Serial.println(';');
 						break;
 					case '2':
-						dc_start(1); break;
+						dc_start(1); 
+						Serial.println("P up;");
+						remote_access = true;
+						break;
 					case '3':
-						dc_start(0); break;
+						dc_start(0); 
+						Serial.println("P down;");
+						remote_access = true;
+						break;
 					case '4':
-						dc_stop(); break;
+						Serial.println("P stop;");
+						remote_access = false;
+						dc_stop(); 
+						break;
 					case '5':
 						timeout += 3600; break;
 					case '6':
@@ -284,12 +298,15 @@ bool manual_control() {
   }
   dc_stop();
   delay(2000);
-  Serial.println("Pm_end_manual;");
-  if (zeiten.Tageszeit % 2) {
-    ist.toorstatus = 0;
-  } else {
-    ist.toorstatus = 1;
+  Serial.print("Pm_end_manual");
+  if(!digitalRead(OBEN_ENDSCHALTER)){
+	  ist.toorstatus = 1;
+  } else if(!digitalRead(UNTEN_ENDSCHALTER)){
+	  ist.toorstatus = 0;
   }
+  Serial.print(soll.toorstatus);
+  Serial.print(ist.toorstatus);
+  Serial.println(';');
   return true;
 }
 

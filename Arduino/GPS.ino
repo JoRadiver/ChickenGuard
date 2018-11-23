@@ -75,7 +75,7 @@ void gps_setup() {
 #if NO_GPS_HARDWARE == 1
   return;
 #endif
-  deb.dprintln(F("GPS setup "));
+  deb.dprintln(F(" GPS setup "));
   gps.begin(9600);                                    // Configure GPS to onlu output minimum data (location, time, fix).
   gps.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCONLY);      // Use a 1 hz, once a second, update rate.
   gps.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);          // Enable the interrupt to parse GPS data.
