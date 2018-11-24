@@ -19,10 +19,14 @@ from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton
 ser = None
 bot = None
 serial_lock = RLock()
+file_lock = RLock()
 camera = PiCamera()
 photo = None
 manuellmodus = False
 IR_led = LED(14)
+logfile_path = os.path.join(config.workingPath, 'logfile.txt')
+celsiusfile_path = os.path.join(config.workingPath, 'celsiusfile.txt')
+userfile_path = os.path.join(config.workingPath, 'users.txt')
 #=========================================================================#
 
 
@@ -63,80 +67,86 @@ def date_from_unix_int(time):
 	return str
 	
 def log_message(str, write = False):
-	with open(os.path.join(config.workingPath, "logfile.txt"),'r+') as lf, open(os.path.join(config.workingPath,"celsiusfile.txt"), 'r+') as Tf :
-		print()
-		print(" - Received from ardiuno: "+str)
-		list = str.split(';')		
-		text = ""
-		for e in list:
-			line = ""
-			if len(e) < 2 :
-				continue
-			letter = e[0]
-			e = e[1:]
-			if letter == 'T':  #Türchen
-				line = "*Türchen:*	   "
-				words = ["Geschlossen","Offen","Schliesst","Öffnet", "Fehler"]
-				line += words[int(e)]
-			elif letter == 'Z': #Zaun
-				line = "*Zaun:*		   "
-				words = ["An","Aus"]
-				line += words[int(e)]
-			elif letter == 'L':  #Licht
-				line = "*Licht:*	   "
-				words = ["An","Aus"]
-				line += words[int(e)]
-			elif letter == 'C':  #Temparatur
-				line = "*Temparatur:*  "
-				line += float(e) + "°C"
-				if write :
-					Tf.write(float(e))
-			elif letter == 'a':  #
-				line = "*Systemzeit:*  "
-				line += time_from_unix_int(int(e))
-				line += "	 " + date_from_unix_int(int(e))
-			elif letter == 'r':
-				line = "*Öffnungszeit:* "
-				line += time_from_unix_int(int(e))
-			elif letter == 's':
-				line = "*Schliesszeit:* "
-				line += time_from_unix_int(int(e))
-			elif letter == 'S':
-				line = "*Arduino hat gestartet*"
-			elif letter == 'X':
-				line = "*Fehler:*		"
-				line += e
-			elif letter == 'H':
-				line = "*Fehler:*		"
-				line += e
-				if config.master_chat_id != None:
-					bot.sendMessage(config.master_chat_id, line, reply_markup = fehler_keyboard)
-			elif letter == 'P':
-				line = "*Nachricht:*		"
-				line += e
-				if config.master_chat_id != None:
-					bot.sendMessage(config.master_chat_id, line)
-					line = ""
-			elif letter == 'D': #Differenz
-				line = "*Zeit Aktualisiert:* "
-				shifttime = int(e)
-				if shifttime < 60:
-					line += "Zeit hat sich um wenige sekunden verändert."
-				elif shifttime >= 60:
-					line += "Zeit hat sich um "
-					line += str(int(e)//60)
-					line += " Minuten verändert."
-				elif shifttime > 3600:
-					line += "Zeit wurde eingestellt."
-			elif letter == ' ': #Those messages are not logged.
-				pass
-			elif len(e)>0:
-				line = "*Andere:*		"
-				line += e
-			text += line + "\U0000000A"
-		if write:
-			lf.write(text.strip('*'))
-		return text
+	with file_lock:
+		with open(logfile_path,'a') as lf, open(celsiusfile_path, 'a') as Tf :
+			print()
+			print(" - Received from ardiuno: "+str)
+			list = str.split(';')		
+			text = ""
+			for e in list:
+				line = ""
+				if len(e) < 2 :
+					continue
+				letter = e[0]
+				e = e[1:]
+				if letter == 'T':  #Türchen
+					line = "*Türchen:*	   "
+					words = ["Geschlossen","Offen","Schliesst","Öffnet", "Fehler"]
+					line += words[int(e)]
+				elif letter == 'Z': #Zaun
+					line = "*Zaun:*		   "
+					words = ["An","Aus"]
+					line += words[int(e)]
+				elif letter == 'L':  #Licht
+					line = "*Licht:*	   "
+					words = ["An","Aus"]
+					line += words[int(e)]
+				elif letter == 'C':  #Temparatur
+					line = "*Temparatur:*  "
+					line += float(e) + "°C"
+					if write :
+						Tf.write('\n')
+						Tf.write(float(e))
+						Tf.write('\n')
+				elif letter == 'a':  #
+					line = "*Systemzeit:*  "
+					line += time_from_unix_int(int(e))
+					line += "	 " + date_from_unix_int(int(e))
+				elif letter == 'r':
+					line = "*Öffnungszeit:* "
+					line += time_from_unix_int(int(e))
+				elif letter == 's':
+					line = "*Schliesszeit:* "
+					line += time_from_unix_int(int(e))
+				elif letter == 'S':
+					line = "*Arduino hat gestartet*"
+				elif letter == 'X':
+					line = "*Fehler:*		"
+					line += e
+				elif letter == 'H':
+					line = "*Fehler:*		"
+					line += e
+					if config.master_chat_id != None:
+						bot.sendMessage(config.master_chat_id, line, reply_markup = fehler_keyboard)
+				elif letter == 'P':
+					line = "*Nachricht:*		"
+					line += e
+					if config.master_chat_id != None:
+						bot.sendMessage(config.master_chat_id, line)
+						line = ""
+				elif letter == 'D': #Differenz
+					line = "*Zeit Aktualisiert:* "
+					shifttime = int(e)
+					if shifttime < 60:
+						line += "Zeit hat sich um wenige sekunden verändert."
+					elif shifttime >= 60:
+						line += "Zeit hat sich um "
+						line += str(int(e)//60)
+						line += " Minuten verändert."
+					elif shifttime > 3600:
+						line += "Zeit wurde eingestellt."
+				elif letter == ' ': #Those messages are not logged.
+					pass
+				elif len(e)>0:
+					line = "*Andere:*		"
+					line += e
+				text += line + "\U0000000A"
+			if write:
+				lf.write('\n')
+				lf.write('-----------------------------------\n')
+				lf.write(text.strip('*'))
+				lf.write('-----------------------------------\n')
+			return text
 
 
 def send_to_arduino(tosend):
@@ -145,8 +155,9 @@ def send_to_arduino(tosend):
 		ser.write((tosend).encode()+ b'\n')
 					
 def cache_user(user):
-	with open(os.path.join(config.workingPath,'users.txt'), 'r+') as f:
-		f.write(str(user))
+	with file_lock:
+		with open(userfile_path, 'a') as f:
+			f.write(str(user))
 	
 def authenticate(user):
 	if user in config.users:
@@ -277,12 +288,12 @@ def handle(msg):
 				send_to_arduino("s25")
 				bot.sendMessage(chat_id, "Arduino Wartet Unendlich")
 			elif 'Logfile' in command:
-				with serial_lock:
-					with open(os.path.join(config.workingPath,'logfile.txt'), 'rb') as file:
+				with file_lock:
+					with open(logfile_path, 'rb') as file:
 						bot.sendDocument(chat_id, file)
 			elif 'Tempfile' in command:
-				with serial_lock:
-					with open(os.path.join(config.workingPath,'celsiusfile.txt'), 'rb') as file:
+				with file_lock:
+					with open(celsiusfile_path, 'rb') as file:
 						bot.sendDocument(chat_id, file)
 			elif 'Zurück' in command and chat_id == config.master_chat_id:
 				send_to_arduino("s26")
@@ -293,12 +304,33 @@ def handle(msg):
 			print("Unauthorized Acces from:"+str(user_id))
 		print('------------------------------------------')
 		
-		
 
-ser = serial.Serial("/dev/ttyUSB0", 9600, timeout = 2)
+
+#Create files if they don't yet exist.
+try :
+	with open(logfile_path, 'r') as f:
+		pass
+except IOError:
+	f = open(logfile_path, 'w')
+	f.close()
+try :
+	with open(celsiusfile_path, 'r') as f:
+		pass
+except IOError:
+	f = open(celsiusfile_path, 'w')
+	f.close()
+try :
+	with open(userfile_path, 'r') as f:
+		pass
+except IOError:
+	f = open(userfile_path, 'w')
+	f.close()
+
+	
 print()
 print()
 print('################# BOT STARTING #################')
+ser = serial.Serial("/dev/ttyUSB0", 9600, timeout = 2)
 print("Serial Port ready.")
 
 startMSG = ""
@@ -310,7 +342,7 @@ while not "SR;" in startMSG:
 	if ser.in_waiting > 3:
 		startMSG = ser.readline().decode('utf-8').strip('\n')
 		print('  Arduino reports: ' + startMSG)
-	if i == 200 or i == 300 or i == 600:
+	if i == 200 or i == 300 or i == 400 or i == 600:
 		send_to_arduino('s99')
 	if i == 1800 or 'FJ ist' in startMSG:
 		i = 1200
