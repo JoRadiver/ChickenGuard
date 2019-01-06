@@ -49,37 +49,38 @@ void calc_door() {
     return;
   }
   if ( !ist.oberer_endschalter && !ist.unterer_endschalter) {
-    //if (await_door_arrival < now()&&ist.toorstatus >= 2) {
-    //fehlerbehebung(0);
-    //} else {
     floating_state = true;
-    return;
-    //}
   }else if(ist.oberer_endschalter && ist.unterer_endschalter){
     fehlerbehebung(0);
   }
-  if (floating_state && ist.oberer_endschalter) {
-    if (ist.toorstatus % 2 == 1) {
-      floating_state = false;
-      ist.toorstatus = 1;
-      deb.dprintln(" arrived_top");
-      exout.digitalSet(LED_1, HIGH);
-      exout.digitalSet(LED_2, LOW);
-    } else {
-      deb.dprintln(" rencountered_top");
-      fehlerbehebung(1);
-    }
-  } else if (floating_state && ist.unterer_endschalter) {
-    if (ist.toorstatus % 2 == 0) {
-      floating_state = false;
-      ist.toorstatus = 0;
-      deb.dprintln("arrived bot");
-      exout.digitalSet(LED_1, LOW);
-      exout.digitalSet(LED_2, HIGH);
-    } else {
-      fehlerbehebung(2);
-    }
+  if (floating_state){
+	  if (ist.oberer_endschalter || (zeiten.loop_zeit > zeiten.Toor_stop_wecker && ist.toorstatus == 3) )  {
+		if (ist.toorstatus % 2 == 1) {
+		  floating_state = false;
+		  ist.toorstatus = 1;
+		  deb.dprintln(" arrived_top");
+		  exout.digitalSet(LED_1, HIGH);
+		  exout.digitalSet(LED_2, LOW);
+		} else {
+		  deb.dprintln(" rencountered_top");
+		  fehlerbehebung(1);
+		}
+	  } else if (ist.unterer_endschalter || (zeiten.loop_zeit > zeiten.Toor_stop_wecker && ist.toorstatus == 2) ) {
+		if (ist.toorstatus % 2 == 0) {
+		  floating_state = false;
+		  ist.toorstatus = 0;
+		  deb.dprintln(" arrived bot");
+		  exout.digitalSet(LED_1, LOW);
+		  exout.digitalSet(LED_2, HIGH);
+		  if(zeiten.Toor_stop_wecker < zeiten.loop_zeit){
+			  Serial.println("Ptstop");
+		  }
+		} else {
+		  fehlerbehebung(2);
+		}
+	  }
   }
+  
   /*
     if (ist.oberer_endschalter) {
     if (ist.toorstatus == 3) {
@@ -103,17 +104,23 @@ void calc_door() {
 // DC TOR FUNCTION
 void tor_bewegen() {
   detect_error();
-  if (ist.toorstatus % 2 != soll.toorstatus) {
+  if (ist.toorstatus % 2 != soll.toorstatus && ist.toorstatus < 2) { // Darf nur richtung wechseln wenn komplett.
     if (soll.toorstatus) {
-      await_door_arrival = now() + DOOR_TIME_NEEDED;
-      ist.toorstatus = 3; // motorstatus 3 (opening)
+      zeiten.Toor_stop_wecker = zeiten.loop_zeit + DOOR_TIME_NEEDED*2; //Takes 1.5 times as long to open than to close! Doesen't matter how long it pulls to far so overestimating is good.
+      deb.dprintln(" sup");
+	  deb.dprint(" st:");
+	  deb.dprintln(zeiten.Toor_stop_wecker-zeiten.loop_zeit);
+	  ist.toorstatus = 3; // motorstatus 3 (opening)
       dc_start(1);
     }
     else {
       //DC has not yet startet
-      await_door_arrival = now() + DOOR_TIME_NEEDED;
+      zeiten.Toor_stop_wecker = zeiten.loop_zeit + DOOR_TIME_NEEDED;
       ist.toorstatus = 2; //motorstatus 2 (closing)
       dc_start(0);
+	  deb.dprintln(" sdown");
+	  deb.dprint(" st:");
+	  deb.dprintln(zeiten.Toor_stop_wecker-zeiten.loop_zeit);
     }
   }
   else if (ist.toorstatus == soll.toorstatus) {
@@ -207,7 +214,7 @@ void fehlerbehebung(int type) {
   //stay blinking as long as user does not take over.
   while (!manual_control());
   floating_state = false;
-  deb.dprintln("reseted");
+  deb.dprintln("Preseted");
 }
 
 //returns true if user has ordered exit, zero if timeout.

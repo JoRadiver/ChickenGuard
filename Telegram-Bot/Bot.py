@@ -61,17 +61,17 @@ def time_from_unix_int(time):
 	return datetime.fromtimestamp(time).strftime('%H:%M')
 
 def date_from_unix_int(time):
-	str = datetime.fromtimestamp(time).strftime('%d. ')
+	stri = datetime.fromtimestamp(time).strftime('%d. ')
 	words = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"]
-	str += words[int(datetime.fromtimestamp(time).strftime('%m'))-1]
-	return str
+	stri += words[int(datetime.fromtimestamp(time).strftime('%m'))-1]
+	return stri
 	
-def log_message(str, write = False):
+def log_message(stri, write = False):
 	with file_lock:
 		with open(logfile_path,'a') as lf, open(celsiusfile_path, 'a') as Tf :
 			print()
-			print(" - Received from ardiuno: "+str)
-			list = str.split(';')		
+			print(" - Received from ardiuno: "+stri)
+			list = stri.split(';')		
 			text = ""
 			for e in list:
 				line = ""
@@ -298,6 +298,10 @@ def handle(msg):
 			elif 'Zurück' in command and chat_id == config.master_chat_id:
 				send_to_arduino("s26")
 				bot.sendMessage(user_id, "Manueller modus beendet", reply_markup = full_keyboard)
+			elif 'deb-en' in command and chat_id == config.master_chat_id:
+				send_to_arduino("s10")
+			elif 'deb-stop' in command and chat_id == config.master_chat_id:
+				send_to_arduino("s11")
 			print("Command Processed.")
 		else:
 			cache_user(user_id)
@@ -354,7 +358,8 @@ bot = telepot.Bot(config.telegram_token)
 bot.message_loop(handle)
 print("Bot ready.")
 print('###############################################')
-		
+time.sleep(30)
+send_to_arduino("s08")
 while True:
 	#anything to make it not run at full speed (Recommendations welcome)
 	#The log updates are only once a hour

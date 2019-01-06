@@ -26,7 +26,7 @@
 #define INTERRUPT_OVERRIDE_TIME 1800      //Zeit wie lange nach einem Interrupt befehl nicht kontrolliert wird
 #define STEP_COOLDOWN_TIME 4          //Milisekunden bis ein weiterer Schritt gemacht werden darf.
 #define STEPS_NEEDED 53379
-#define DOOR_TIME_NEEDED 40                    //sekunden wie lange die Türöffnung dauert.
+#define DOOR_TIME_NEEDED 25                  //sekunden wie lange die Türöffnung dauert.
 const int timezzone = 0;                        //Zeitzone UTC+...
 #define NACHT_VERSPAETUNG 25               //wie viele Minuten nach Sonnenuntergang soll geschlossen werden?
 #define TAG_VERFRUEHUNG 10                //wie viele Minuten vor Sonnenaufgang soll geöffnet werden?
@@ -98,8 +98,8 @@ boolean usingInterrupt = false;
 #if MOTOR_TYPE == 1
 #else
   bool floating_state = true;   //the real position of the door is not, known, as no sensor sends signals. 
-  unsigned long await_door_arrival = 0;
- unsigned long switch_debounce = 0;
+  unsigned long switch_debounce = 0;
+unsigned long global_time_debug = 0;
 #endif
 
 //Picode
@@ -151,7 +151,7 @@ void setup() {
 
   Serial.begin(9600);
   deb.activate();
-  deb.dprintln(F("START v.0007"));
+  deb.dprintln(F("START v.0009"));
   delay(100);
 #if NO_GPS_HARDWARE == 1
   deb.dprintln("NO_GPS_HARDWARE Debug mode AKTIV. PROGRAM NICHT FUNKTIONSFAEHIG!");
@@ -204,7 +204,8 @@ void setup() {
   zeiten.Standard_wecker = zeiten.loop_zeit;
   zeiten.display_wecker = zeiten.loop_zeit;
   zeiten.PIreport_wecker = zeiten.loop_zeit;
-
+  zeiten.Toor_stop_wecker = zeiten.loop_zeit;
+  
 Serial.println(" Setup done");
   
 }
@@ -220,8 +221,8 @@ void loop() {
   zeiten.loop_zeit = now();
 
   //GPS
-  if (zeiten.loop_zeit >= zeiten.GPS_wecker) {
-    gpsRefresh();
+  if (zeiten.loop_zeit >= zeiten.GPS_wecker && !(ist.toorstatus == 2 || ist.toorstatus == 3)) {
+    gpsRefresh(); //kein refresh wenn sich das toor bewegt.
   }
     
   //Calculate
@@ -295,7 +296,9 @@ void loop() {
   }
   
 #endif
+
 }
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//
 //========================================LOOP=======================================//
+//Flashing command: avrdude -C avrdude.conf -v -p atmega328p -c arduino -P /dev/ttyUSB0 -b 57600 -D -U flash:w:Arduino.ino.hex:i

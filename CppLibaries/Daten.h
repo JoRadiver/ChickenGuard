@@ -10,6 +10,7 @@ struct Zeiten{
 	unsigned long PIreport_wecker = 0;
 	unsigned long Standard_wecker = 0;
 	unsigned long Step_cooldown = 0;  //This one is in Milliseconds, carefull
+	unsigned long Toor_stop_wecker = 0; //This one tells the dc motor to stop if no sensor is touched.
 	volatile bool interrupt = false;
 
 	//Sonnenzeiten
@@ -26,6 +27,7 @@ struct Zeiten{
 		Standard_wecker += diff;
 		Sonnenaufgang += diff;
 		Sonnenuntergang += diff;
+		Toor_stop_wecker += diff;
 	}
 };
 
