@@ -12,6 +12,8 @@ import config
 from picamera import PiCamera
 from threading import RLock
 from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton
+import sys
+from subprocess import check_call, CalledProcessError
 #=========================================================================#
 
 
@@ -33,7 +35,7 @@ userfile_path = os.path.join(config.workingPath, 'users.txt')
 #==========================TELEGRAM KEYBOARDS=============================#
 full_keyboard = ReplyKeyboardMarkup(
 								keyboard=[
-									[KeyboardButton(text = '\U0001F4D6 Status'), KeyboardButton(text="\U0001F4F8 Bild")],
+									[KeyboardButton(text = '\U0001F4D6 Status'), KeyboardButton(text="\U0001F4F8 Bild"), KeyboardButton(text="\U0001F4F8 Film 3")],
 									[KeyboardButton(text = '\U00002B06 Öffnen'), KeyboardButton(text="\U00002B07 Schliessen")],
 									[KeyboardButton(text = '/start'), KeyboardButton(text="\U0000267B Refresh")]
 								]
@@ -116,8 +118,12 @@ def log_message(stri, write = False):
 				elif letter == 'H':
 					line = "*Fehler:*		"
 					line += e
-					if config.master_chat_id != None:
-						bot.sendMessage(config.master_chat_id, line, reply_markup = fehler_keyboard)
+					if e == "tstop":
+						if config.master_chat_id != None:
+							bot.sendMessage(config.master_chat_id, "Törchen auf zeit geschlossen", reply_markup = fehler_keyboard)
+					else:
+						if config.master_chat_id != None:
+							bot.sendMessage(config.master_chat_id, line, reply_markup = fehler_keyboard)
 				elif letter == 'P':
 					line = "*Nachricht:*		"
 					line += e
@@ -163,7 +169,20 @@ def authenticate(user):
 	if user in config.users:
 		return True
 	return False
-
+def convert_video():
+	try:
+		os.remove('/home/pi/film.mp4')
+	except OSError:
+		pass
+		
+	cmd = ['MP4Box', '-add', '/home/pi/film.h264', '/home/pi/film.mp4']
+	check_call(cmd)
+	
+	try:
+		os.remove('/home/pi/film.h264')
+	except OSError:
+		pass
+	
 #Command Codes For Chicken Door:
 # 01: Log
 # 02: OpenDoor
@@ -202,7 +221,7 @@ def handle(msg):
 					camera.start_preview()
 					time.sleep(2)
 					camera.vflip = True
-					camera.hflip = False
+					camera.hflip = True
 					camera.capture('/home/pi/bild.jpg')
 					camera.stop_preview()
 					IR_led.off()
@@ -213,6 +232,30 @@ def handle(msg):
 					print(e)
 					print( '----------------------------------------' )
 					bot.sendMessage(chat_id, "Bild oeffnen oder senden fehlgeschlagen.")
+			elif 'Film' in command:
+				try:
+					record_time = int(command[7:])
+					if record_time > 20 or record_time == None or record_time < 0:
+						bot.sendMessage(chat_id, "Max 20 sek.")
+						record_time = 20
+					IR_led.on()
+					camera.start_preview()
+					time.sleep(1)
+					camera.vflip = True
+					camera.hflip = True
+					camera.start_recording('/home/pi/film.h264')
+					time.sleep(record_time)
+					camera.stop_recording()
+					camera.stop_preview()
+					IR_led.off()
+					convert_video()
+					with open('/home/pi/film.mp4', 'rb') as film:            
+						bot.sendVideo(chat_id, film)
+				except Exception as e:	#falls es fehlgeschlagen ist, melde das.
+					print( '----failed to send or capture Video---' )
+					print(e)
+					print( '----------------------------------------' )
+					bot.sendMessage(chat_id, "Film oeffnen oder senden fehlgeschlagen.")
 			elif 'Schliessen' in command:				
 					send_to_arduino("s03")
 					bot.sendMessage(chat_id, 'Türchen schliesst.')
