@@ -61,94 +61,99 @@ def time_from_unix_int(time):
 	return datetime.fromtimestamp(time).strftime('%H:%M')
 
 def date_from_unix_int(time):
-	str = datetime.fromtimestamp(time).strftime('%d. ')
+	d_string = datetime.fromtimestamp(time).strftime('%d. ')
 	words = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"]
-	str += words[int(datetime.fromtimestamp(time).strftime('%m'))-1]
-	return str
+	d_string += words[int(datetime.fromtimestamp(time).strftime('%m'))-1]
+	return d_string
 	
-def log_message(str, write = False):
-	with file_lock:
-		with open(logfile_path,'a') as lf, open(celsiusfile_path, 'a') as Tf :
-			print()
-			print(" - Received from ardiuno: "+str)
-			list = str.split(';')		
-			text = ""
-			for e in list:
-				line = ""
-				if len(e) < 2 :
-					continue
-				letter = e[0]
-				e = e[1:]
-				if letter == 'T':  #Türchen
-					line = "*Türchen:*	   "
-					words = ["Geschlossen","Offen","Schliesst","Öffnet", "Fehler"]
-					line += words[int(e)]
-				elif letter == 'Z': #Zaun
-					line = "*Zaun:*		   "
-					words = ["An","Aus"]
-					line += words[int(e)]
-				elif letter == 'L':  #Licht
-					line = "*Licht:*	   "
-					words = ["An","Aus"]
-					line += words[int(e)]
-				elif letter == 'C':  #Temparatur
-					line = "*Temparatur:*  "
-					line += float(e) + "°C"
-					if write :
-						Tf.write('\n')
-						Tf.write(float(e))
-						Tf.write('\n')
-				elif letter == 'a':  #
-					line = "*Systemzeit:*  "
-					line += time_from_unix_int(int(e))
-					line += "	 " + date_from_unix_int(int(e))
-				elif letter == 'r':
-					line = "*Öffnungszeit:* "
-					line += time_from_unix_int(int(e))
-				elif letter == 's':
-					line = "*Schliesszeit:* "
-					line += time_from_unix_int(int(e))
-				elif letter == 'S':
-					line = "*Arduino hat gestartet*"
-				elif letter == 'X':
-					line = "*Fehler:*		"
-					line += e
-				elif letter == 'H':
-					line = "*Fehler:*		"
-					line += e
-					if config.master_chat_id != None:
-						bot.sendMessage(config.master_chat_id, line, reply_markup = fehler_keyboard)
-				elif letter == 'P':
-					line = "*Nachricht:*		"
-					line += e
-					if config.master_chat_id != None:
-						bot.sendMessage(config.master_chat_id, line)
-						line = ""
-				elif letter == 'D': #Differenz
-					line = "*Zeit Aktualisiert:* "
-					shifttime = int(e)
-					if shifttime < 60:
-						line += "Zeit hat sich um wenige sekunden verändert."
-					elif shifttime >= 60:
-						line += "Zeit hat sich um "
-						line += str(int(e)//60)
-						line += " Minuten verändert."
-					elif shifttime > 3600:
-						line += "Zeit wurde eingestellt."
-				elif letter == ' ': #Those messages are not logged.
-					pass
-				elif len(e)>0:
-					line = "*Andere:*		"
-					line += e
-				text += line + "\U0000000A"
-			if write:
-				lf.write('\n')
-				lf.write('-----------------------------------\n')
-				lf.write(text.strip('*'))
-				lf.write('-----------------------------------\n')
-			return text
-
-
+def log_message(message, write = False):
+	try:
+		with file_lock:
+			with open(logfile_path,'a') as lf, open(celsiusfile_path, 'a') as Tf :
+				print()
+				print(" - Received from ardiuno: "+message)
+				list = message.split(';')		
+				text = ""
+				for e in list:
+					line = ""
+					if len(e) < 2 :
+						continue
+					letter = e[0]
+					e = e[1:]
+					if letter == 'T':  #Türchen
+						line = "*Türchen:*	   "
+						words = ["Geschlossen","Offen","Schliesst","Öffnet", "Fehler"]
+						line += words[int(e)]
+					elif letter == 'Z': #Zaun
+						line = "*Zaun:*		   "
+						words = ["An","Aus"]
+						line += words[int(e)]
+					elif letter == 'L':  #Licht
+						line = "*Licht:*	   "
+						words = ["An","Aus"]
+						line += words[int(e)]
+					elif letter == 'C':  #Temparatur
+						line = "*Temparatur:*  "
+						line += str(float(e)) + "°C"
+						if write :
+							Tf.write('\n')
+							Tf.write(str(float(e)))
+							Tf.write('\n')
+					elif letter == 'a':  #
+						line = "*Systemzeit:*  "
+						line += time_from_unix_int(int(e))
+						line += "	 " + date_from_unix_int(int(e))
+					elif letter == 'r':
+						line = "*Öffnungszeit:* "
+						line += time_from_unix_int(int(e))
+					elif letter == 's':
+						line = "*Schliesszeit:* "
+						line += time_from_unix_int(int(e))
+					elif letter == 'S':
+						line = "*Arduino hat gestartet*"
+					elif letter == 'X':
+						line = "*Fehler:*		"
+						line += e
+					elif letter == 'H':
+						line = "*Fehler:*		"
+						line += e
+						if config.master_chat_id != None:
+							bot.sendMessage(config.master_chat_id, line, reply_markup = fehler_keyboard)
+					elif letter == 'P':
+						line = "*Nachricht:*		"
+						line += e
+						if config.master_chat_id != None:
+							bot.sendMessage(config.master_chat_id, line)
+							line = ""
+					elif letter == 'D': #Differenz
+						line = "*Zeit Aktualisiert:* "
+						shifttime = int(e)
+						if shifttime < 60:
+							line += "Zeit hat sich um wenige sekunden verändert."
+						elif shifttime >= 60:
+							line += "Zeit hat sich um "
+							line += str(int(e)//60)
+							line += " Minuten verändert."
+						elif shifttime > 3600:
+							line += "Zeit wurde eingestellt."
+					elif letter == ' ': #Those messages are not logged.
+						pass
+					elif len(e)>0:
+						line = "*Andere:*		"
+						line += e
+					text += line + "\U0000000A"
+				if write:
+					lf.write('\n')
+					lf.write('-----------------------------------\n')
+					lf.write(text.strip('*'))
+					lf.write('-----------------------------------\n')
+				return text
+	except EnvironmentError:
+		print('Could not open file')
+	except Exception as e:
+		print(e)
+		raise e
+		
 def send_to_arduino(tosend):
 	with serial_lock:
 		print(" => Sent to Arduino: "+tosend)
@@ -356,16 +361,27 @@ print("Bot ready.")
 print('###############################################')
 		
 while True:
-	#anything to make it not run at full speed (Recommendations welcome)
-	#The log updates are only once a hour
-	time.sleep(3)
-	#here i need to make sure it does not collide with the other thread.
-	with serial_lock:
-		while ser.in_waiting > 0:
-			try:
-				line = ser.readline().decode('utf-8').strip('\n')
-				log_message(line,write = True)
-			except UnicodeDecodeError:
-				print("Bad Arduino Data")
+	try:
+		#anything to make it not run at full speed (Recommendations welcome)
+		#The log updates are only once a hour
+		time.sleep(3)
+		#here i need to make sure it does not collide with the other thread.
+		with serial_lock:
+			while ser.in_waiting > 0:
+				try:
+					line = ser.readline().decode('utf-8').strip('\n')
+					log_message(line,write = True)
+				except UnicodeDecodeError:
+					print("Bad Arduino Data")
+	except Exception as e:
+		print(e)
+		try:
+			with open(logfile_path, 'a') as f:
+				f.write('/n')
+				f.write('|=|=|=|=|=|=|=|=|=|=|=|=|=|=|=|=|=|=|=|=|')
+				f.write(str(e))
+		except Exception as q:
+			print(q)
+		raise e
 		
 		

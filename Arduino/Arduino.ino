@@ -1,16 +1,11 @@
-/*
- * This verison is for DC Motors and tries to handle errors on its own.
- * It has manual control Implemented
- */
 //================================CODE SELECTORS=====================================//
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//
-#define MOTOR_TYPE 0  //define 1 for stepper, any other integer for dc
+#define MOTOR_TYPE 1  //define 1 for stepper, any other integer for dc
 #define PI_MODULE 1  //Define 1 to include
 #define DISPLAY_MODULE 0  //Define 1 to include
-#define NO_GPS_HARDWARE 0 //Dies muss 0 sein sonst ist der testcode aktiviert
-#define NO_IO_HARDWARE 0 //Dies muss auch 0 sein!
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//
 //================================CODE SELECTORS=====================================// 
+
 
 
 
@@ -26,11 +21,10 @@
 #define INTERRUPT_OVERRIDE_TIME 1800      //Zeit wie lange nach einem Interrupt befehl nicht kontrolliert wird
 #define STEP_COOLDOWN_TIME 4          //Milisekunden bis ein weiterer Schritt gemacht werden darf.
 #define STEPS_NEEDED 53379
-#define DOOR_TIME_NEEDED 40                    //sekunden wie lange die Türöffnung dauert.
 const int timezzone = 0;                        //Zeitzone UTC+...
-#define NACHT_VERSPAETUNG 25               //wie viele Minuten nach Sonnenuntergang soll geschlossen werden?
-#define TAG_VERFRUEHUNG 10                //wie viele Minuten vor Sonnenaufgang soll geöffnet werden?
-#define STARTZEIT 12, 12, 12, 1, 9, 1997
+#define NACHT_VERSPAETUNG 0               //wie viele Minuten nach Sonnenuntergang soll geschlossen werden?
+#define TAG_VERFRUEHUNG 0                //wie viele Minuten vor Sonnenaufgang soll geöffnet werden?
+#define STARTZEIT 0, 0, 0, 1, 9, 1997
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//
 //==============================TUNING VARIABLEN=====================================//
 
@@ -70,12 +64,8 @@ int GPS_TX = 8;
 // Shift Register OUTPUTS
 #define RELAIS_LICHT 1
 #define RELAIS_HAAG 0
-#define LED_1 2
+#define LED_1 5
 #define LED_2 3
-#define MOT_A0 7
-#define MOT_A1 6
-#define MOT_B0 5
-#define MOT_B1 4
 
 //debugger
 DebugManager deb(&Serial);
@@ -95,12 +85,8 @@ SoftwareSerial gpsSerial(7, 8);  // GPS breakout/shield will use a
 Adafruit_GPS gps(&gpsSerial);
 boolean usingInterrupt = false;
 
-#if MOTOR_TYPE == 1
-#else
-  bool floating_state = true;   //the real position of the door is not, known, as no sensor sends signals. 
-  unsigned long await_door_arrival = 0;
- unsigned long switch_debounce = 0;
-#endif
+
+
 
 //Picode
 #if PI_MODULE == 1
@@ -122,14 +108,10 @@ boolean usingInterrupt = false;
 
 #endif
 
-#if NO_IO_HARDWARE == 1
-  int war_offen = 0;
-#endif
 //Funktionsreferenzen (Deklaration in weiteren tabs)
 
 
-void dc_stop();
-void dc_start(bool dir);
+
 //=======================================SETUP=======================================//
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//
 void setup() {
@@ -151,13 +133,13 @@ void setup() {
 
   Serial.begin(9600);
   deb.activate();
-  deb.dprintln(F("START v.0007"));
+  deb.dprintln(F("STUP"));
   delay(100);
-#if NO_GPS_HARDWARE == 1
-  deb.dprintln("NO_GPS_HARDWARE Debug mode AKTIV. PROGRAM NICHT FUNKTIONSFAEHIG!");
-#endif
+  deb.dprintln(F("Arduino Booting Up"));
+  delay(100);
+  
   gps_setup();
-
+  
   //gps_refresh();
 
   //attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), interrupt_handling, FALLING);
@@ -170,42 +152,41 @@ void setup() {
   u8x8.setPowerSave(0);
   
 #endif
-#if NO_IO_HARDWARE == 1
-  deb.dprintln("NO_IO_HARDWARE Debug mode AKTIV. PROGRAM NICHT FUNKTIONSFAEHIG!");
-#else
-#if MOTOR_TYPE == 1
 
+ #if MOTOR_TYPE == 1
+ exout.current_step = 40000;
+
+  while(digitalRead(OBEN_ENDSCHALTER)){
+    exout.setStep(1);
+    exout.push();
+    delay(STEP_COOLDOWN_TIME);
+    if (exout.current_step == 0){
+      exout.current_step = 40000;
+    }
+  }
+  for(int i = 4; i<8; i++){
+    exout.digitalSet(i, 0);
+  }
+  exout.push();
+  deb.dprintln("Adjustment done");
+  exout.current_step = 0;
 #else
-  delay(2000);
   analogWrite(PWM_1, 40);
   analogWrite(PWM_2, 40);
-  deb.dprintln(" Pwm Set");
-  delay(1000);
-  dc_start(1);
-  delay(100);
-  dc_start(1);
-  deb.dprintln(" öffne");
-  while(digitalRead(OBEN_ENDSCHALTER) && digitalRead(UNTEN_ENDSCHALTER));
-  dc_stop();
-  if (!digitalRead(UNTEN_ENDSCHALTER)){
-	deb.dprintln(" CLOSED");
-	ist.toorstatus = 0;
-  }else{
-	deb.dprintln(" OPEN");
-	ist.toorstatus = 1;
-  }
-  delay(1000);
 #endif
-#endif
+  
+
+  deb.dprintln(F("EOM"));
   deb.stop();
-  setTime(STARTZEIT);
+  setTime(0);
   zeiten.loop_zeit = now();
   zeiten.GPS_wecker = zeiten.loop_zeit;
   zeiten.Standard_wecker = zeiten.loop_zeit;
   zeiten.display_wecker = zeiten.loop_zeit;
   zeiten.PIreport_wecker = zeiten.loop_zeit;
 
-Serial.println(" Setup done");
+
+
   
 }
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!//
@@ -234,30 +215,14 @@ void loop() {
   //Picode
 #if PI_MODULE == 1
 
-  if (Serial.available() > 3) {
+  if (Serial.available() > 2) {
     deb.dprintln(F("Serial recognized"));
     PI_Calculations();    
   }
 
-#endif
-
- #if NO_IO_HARDWARE == 1
- #else
-  //Buttons
-  if(!digitalRead(INTERRUPT_PIN)&&!digitalRead(DIGITAL_I_3)){
-    manual_control();
-  }
+    
+     
   
-  else if(!digitalRead(INTERRUPT_PIN)){
-    soll.toorstatus = 1;
-    zeiten.GPS_wecker = zeiten.loop_zeit + INTERRUPT_OVERRIDE_TIME;
-    zeiten.Standard_wecker = zeiten.loop_zeit + INTERRUPT_OVERRIDE_TIME;
-  }
-  else if(!digitalRead(DIGITAL_I_3)){
-    soll.toorstatus = 0;
-    zeiten.GPS_wecker = zeiten.loop_zeit + INTERRUPT_OVERRIDE_TIME;
-    zeiten.Standard_wecker = zeiten.loop_zeit + INTERRUPT_OVERRIDE_TIME;
-  }
 #endif
 
   //Interrupt
