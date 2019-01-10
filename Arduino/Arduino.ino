@@ -185,12 +185,14 @@ void setup() {
   delay(100);
   dc_start(1);
   deb.dprintln(" öffne");
-  while(digitalRead(OBEN_ENDSCHALTER) && digitalRead(UNTEN_ENDSCHALTER));
+  setTime(0)
+  unsigned long stop_up = now() + 5*DOOR_TIME_NEEDED;
+  while(digitalRead(OBEN_ENDSCHALTER) && digitalRead(UNTEN_ENDSCHALTER)&& stop_up < now());
   dc_stop();
   if (!digitalRead(UNTEN_ENDSCHALTER)){
 	deb.dprintln(" CLOSED");
 	ist.toorstatus = 0;
-  }else{
+  }else {
 	deb.dprintln(" OPEN");
 	ist.toorstatus = 1;
   }

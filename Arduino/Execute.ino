@@ -310,10 +310,13 @@ bool manual_control() {
 	  ist.toorstatus = 1;
   } else if(!digitalRead(UNTEN_ENDSCHALTER)){
 	  ist.toorstatus = 0;
+  } else{
+	  ist.toorstatus = soll.toorstatus;
   }
   Serial.print(soll.toorstatus);
   Serial.print(ist.toorstatus);
   Serial.println(';');
+  zeiten.Toor_stop_wecker = now();
   return true;
 }
 
