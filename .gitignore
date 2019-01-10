@@ -5,3 +5,4 @@ celsiusfile.py
 __pycache__
 SyncToy*.dat
 users.py
+users.ini

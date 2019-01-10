@@ -92,6 +92,7 @@ class User:
 	def __init__(self, chat_id, status = "guest"):
 		self.chat_id = chat_id
 		self.user_id = None
+		self.name = None
 		self.status = status #stranger, guest, user, admin
 		self.job = "none" #none, login, manual
 		self.jobstep = 0 #some jobs require count of steps
@@ -119,6 +120,10 @@ class User:
 		
 	def change_status(self, new_status):
 		self.status = new_status
+	
+	def change_name(self, new_name):
+		self.name = new_name
+		
 	def set_job(self, job):
 		if self.job == "none":	
 			self.job = job
@@ -129,3 +134,11 @@ class User:
 	def job_done(self):
 		self.job = "none"
 		self.jobstep = 0
+		
+		
+	def __repr__(self):
+		if self.name == None:
+			return "<User: " + str(chat_id)+">"
+		else:
+			return "<User: " + name + ">"
+			

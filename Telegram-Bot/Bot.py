@@ -1,5 +1,41 @@
 #!/usr/bin/env python3
 
+# =========================================
+# File Structure:
+# -----------------------------------------
+# imports
+# -----------------------------------------
+# constants
+# -----------------------------------------
+# keyboards: All telegram custom keyboards
+# -----------------------------------------
+# utility functions: 
+	# Functions used to convert or calculate 
+	# certain things
+# -----------------------------------------
+# Arduino receive functions: 
+	# Functions that parse information sent
+	# from the Arduino
+# -----------------------------------------
+# handle Functions: 
+	# Handle Functions Parse the commands 
+	# sent by the Telegram User 
+	# (executed by the telepot libary)
+# -----------------------------------------
+# start preparations:
+	# makes sure all files exist.
+# -----------------------------------------
+# Start sequqence:
+	# initiates Arduino reboot, waits for 
+	# its boot, starts telegram bot, 
+#------------------------------------------
+#RUNTIME CODE
+#	listens for arduino input
+# ==========================================
+
+
+
+#=================================IMPORTS==================================#
 import time
 from gpiozero import LED
 import random
@@ -18,7 +54,7 @@ import re
 #=========================================================================#
 
 
-#===============================GLOBALS===================================#
+#===============================CONSTANTS===================================#
 ser = None
 bot = None
 serial_lock = RLock()
@@ -59,7 +95,7 @@ yesno_keyboard = ReplyKeyboardMarkup(
 #=========================================================================#
 
 
-
+#===============================UTILITY FUNCTIONS===================================#
 def time_from_unix_int(time):
 	return datetime.fromtimestamp(time).strftime('%H:%M')
 
@@ -68,7 +104,9 @@ def date_from_unix_int(time):
 	words = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"]
 	stri += words[int(datetime.fromtimestamp(time).strftime('%m'))-1]
 	return stri
-	
+#=========================================================================#
+
+#=================================ARDUINO RECEIVE FUNCTIONS================================#	
 def log_message(stri, write = False):
 	with file_lock:
 		with open(logfile_path,'a') as lf, open(celsiusfile_path, 'a') as Tf :
@@ -153,9 +191,11 @@ def log_message(stri, write = False):
 				lf.write(text.strip('*'))
 				lf.write('-----------------------------------\n')
 			return text
+#=========================================================================#
 
-
+#encodes strings and sends them to the arduino.
 def send_to_arduino(tosend):
+	#serial lock to make sure only one thresad is on the communication with the arduino at a time.
 	with serial_lock:
 		print(" => Sent to Arduino: "+tosend)
 		ser.write((tosend).encode()+ b'\n')
@@ -203,6 +243,8 @@ def convert_video():
 # 24: Stop Motor (in manual mode)
 # 25: Warte 60 min länger (in manual mode)
 # 26: Exit Manual Mode
+
+#=================================HANDLE FUNCTIONS========================================#
 #The handle Function is called by the telepot thread, 
 #whenever a message is received from Telegram
 def handle(msg):
@@ -352,8 +394,9 @@ def handle(msg):
 			print("Unauthorized Acces from:"+str(user_id))
 		print('------------------------------------------')
 		
+#=====================================================================================#
 
-
+#================================START PREPARATIONS====================================#
 #Create files if they don't yet exist.
 try :
 	with open(logfile_path, 'r') as f:
@@ -373,8 +416,10 @@ try :
 except IOError:
 	f = open(userfile_path, 'w')
 	f.close()
+#===================================================================================#
 
-	
+
+#==================================START SEQUENCE=======================================#
 print()
 print()
 print('################# BOT STARTING #################')
@@ -403,7 +448,11 @@ bot.message_loop(handle)
 print("Bot ready.")
 print('###############################################')
 time.sleep(30)
-send_to_arduino("s08")
+send_to_arduino("s08")  #tell arduino to refresh satellites
+
+#====================================================================================#
+
+#==================================RUNTIME CODE=======================================#
 while True:
 	#anything to make it not run at full speed (Recommendations welcome)
 	#The log updates are only once a hour
@@ -416,5 +465,6 @@ while True:
 				log_message(line,write = True)
 			except UnicodeDecodeError:
 				print("Bad Arduino Data")
+#=======================================================================================#
 		
 		
