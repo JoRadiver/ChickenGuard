@@ -31,9 +31,6 @@ public:
 		if(active)
 			this->link->println(a, b);
 	}
-	void dprint_time(unsigned long time);
-	void dprint_date(unsigned long time);
-	void dprint_time_span(unsigned long time);
 	bool active;
 private:
 	HardwareSerial* link;
