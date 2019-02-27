@@ -101,90 +101,65 @@ int PiManager::handleInput(){
 		pi->read(); //Skim of any bytes which had no starting character
 	}
 	pi->read(); //consume the starting character
-	switch(pi->read()){  //Read the first character
-		case '0':	//First Set
-			switch(pi->read()){ //Read the second character
-				case '1': //Log
-					this->log();
-					break;
-				case '2': //OpenDoor
-					soll->toorstatus = 1;
-					zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
-					zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
-					break;
-				case '3': //CloseDoor
-					soll->toorstatus = 0;
-					zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
-					zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
-					break;
-				case '4': //Fence On
-					soll->zaunstatus = 1;
-					zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
-					zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
-					break;
-				case '5': //Fence Off
-					soll->zaunstatus = 0;
-					zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
-					zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
-					break;
-				case '6': //Light On
-					soll->lichtstatus = 1;
-					zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
-					zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
-					break;
-				case '7': //Light Off
-					soll->lichtstatus = 0;
-					zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
-					zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
-					break;
-				case '8': //Refresh
-					zeiten->GPS_wecker = zeiten->loop_zeit;
-					zeiten->Standard_wecker = zeiten->loop_zeit;
-					break;
-				case '9': //Temparature
-					printTemp();
-					pi->println();
-					break;
-				default:
-					quick_report(N_ERROR, "M");
-					break;
-			}
+	CommandType received_command = pi->read()*10 + pi->read();
+	switch(received_command){
+		case log:
+			this->log();
 			break;
-		case '1':
-			switch(pi->read()){
-				case '0':
-					deb->activate();
-					break;
-				case '1':
-					deb->stop();
-					break;
-				default:
-					quick_report(N_ERROR, "M");
-					break;
-			}
+		case open_door:
+			soll->toorstatus = 1;
+			zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
+			zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			break;
-		case '2':
-			switch(pi->read()){
-				case '0':
-					return -1; //return 1 to indicate manual mode
-				default:
-					break;
-			}
-		case '9':
-			switch(pi->read()){
-				case '9':
-					pi->print('S'); //Start Letter
-					pi->print('R'); //Ready
-					pi->print(';'); 
-					break;
-				default:
-					quick_report(N_ERROR, "M");
-					break;
-			}
+		case close_door:
+			soll->toorstatus = 0;
+			zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
+			zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
+			break;
+		case fence_on:
+			soll->zaunstatus = 1;
+			zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
+			zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
+			break;
+		case fence_off:
+			soll->zaunstatus = 0;
+			zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
+			zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
+			break;
+		case light_on:
+			soll->lichtstatus = 1;
+			zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
+			zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
+			break;
+		case light_off:
+			soll->lichtstatus = 0;
+			zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
+			zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
+			break;
+		case refresh_all:
+			zeiten->GPS_wecker = zeiten->loop_zeit;
+			zeiten->Standard_wecker = zeiten->loop_zeit;
+			break;
+		case temparature:
+			printTemp();
+			pi->println();
+			break;
+		case activate_debugging:
+			deb->activate();
+			break;
+		case deactivate_debugging:
+			deb->stop();
+			break;
+		case jump_to_manual_mode:
+			return -1; //return 1 to indicate manual mode
+			break;
+		case respond_if_ready:
+			pi->print('S'); //Start Letter
+			pi->print('R'); //Ready
+			pi->print(';'); 
 			break;
 		default:
 			quick_report(N_ERROR, "M");
-			break;
 	}
 	while(pi->available() && pi->peek() != 's'){
 		pi->read();//skimm of any excess that is sent before the next s char is sent. 's' char must remain on the serial.
