@@ -33,10 +33,10 @@ void Standard_Calculations() {
       ist.fehler += 1;
   }
   if(zeiten.Tageszeit == day){
-	soll.toorstatus = 1;
+	soll.toorstatus = open;
   }
   else{
-	soll.toorstatus = 0;
+	soll.toorstatus = closed;
   }
   berechne_wecker();
 }

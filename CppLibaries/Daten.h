@@ -58,7 +58,7 @@ struct Zeiten{
 
 //Speichert den soll zustand
 struct Zustand{
-	byte toorstatus; //0 geschlossen, 1 offen, 2, schliessend, 3 öffnend
+	DoorStates::DoorState toorstatus; //0 geschlossen, 1 offen, 2, schliessend, 3 öffnend
 	OnOffStates::OnOffState zaunstatus;
 	OnOffStates::OnOffState lichtstatus;
 	//bool blitz;

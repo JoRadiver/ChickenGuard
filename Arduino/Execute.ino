@@ -54,10 +54,10 @@ void calc_door() {
     fehlerbehebung(0);
   }
   if (floating_state){
-	  if (ist.oberer_endschalter || (zeiten.loop_zeit > zeiten.Toor_stop_wecker && ist.toorstatus == 3) )  {
-		if (ist.toorstatus % 2 == 1) {
+	  if (ist.oberer_endschalter || (zeiten.loop_zeit > zeiten.Toor_stop_wecker && ist.toorstatus == opening) )  {
+		if (ist.toorstatus == open || ist.toorstatus == opening) {
 		  floating_state = false;
-		  ist.toorstatus = 1;
+		  ist.toorstatus = open;
 		  deb.dprintln(" arrived_top");
 		  exout.digitalSet(LED_1, HIGH);
 		  exout.digitalSet(LED_2, LOW);
@@ -65,10 +65,10 @@ void calc_door() {
 		  deb.dprintln(" rencountered_top");
 		  fehlerbehebung(1);
 		}
-	  } else if (ist.unterer_endschalter || (zeiten.loop_zeit > zeiten.Toor_stop_wecker && ist.toorstatus == 2) ) {
-		if (ist.toorstatus % 2 == 0) {
+	  } else if (ist.unterer_endschalter || (zeiten.loop_zeit > zeiten.Toor_stop_wecker && ist.toorstatus == closing) ) {
+		if (ist.toorstatus == closed || ist.toorstatus == closing) {
 		  floating_state = false;
-		  ist.toorstatus = 0;
+		  ist.toorstatus = closed;
 		  deb.dprintln(" arrived bot");
 		  exout.digitalSet(LED_1, LOW);
 		  exout.digitalSet(LED_2, HIGH);
@@ -104,19 +104,19 @@ void calc_door() {
 // DC TOR FUNCTION
 void tor_bewegen() {
   detect_error();
-  if (ist.toorstatus % 2 != soll.toorstatus && ist.toorstatus < 2) { // Darf nur richtung wechseln wenn komplett.
-    if (soll.toorstatus) {
+  if (ist.toorstatus != soll.toorstatus && ist.toorstatus < 2) { // Darf nur richtung wechseln wenn komplett.
+    if (soll.toorstatus == open) {
       zeiten.Toor_stop_wecker = zeiten.loop_zeit + DOOR_TIME_NEEDED*2; //Takes 1.5 times as long to open than to close! Doesen't matter how long it pulls to far so overestimating is good.
       deb.dprintln(" sup");
 	  deb.dprint(" st:");
 	  deb.dprintln(zeiten.Toor_stop_wecker-zeiten.loop_zeit);
-	  ist.toorstatus = 3; // motorstatus 3 (opening)
+	  ist.toorstatus = opening; 
       dc_start(1);
     }
     else {
       //DC has not yet startet
       zeiten.Toor_stop_wecker = zeiten.loop_zeit + DOOR_TIME_NEEDED;
-      ist.toorstatus = 2; //motorstatus 2 (closing)
+      ist.toorstatus = closing; 
       dc_start(0);
 	  deb.dprintln(" sdown");
 	  deb.dprint(" st:");
@@ -182,7 +182,7 @@ void fehlerbehebung(int type) {
           if (tt_stop > now()) {
             deb.dprintln("Error Probably Ressolved");
             floating_state = false;
-            ist.toorstatus = 1;
+            ist.toorstatus = open;
             dc_stop();
             return;
           } else {
@@ -199,7 +199,7 @@ void fehlerbehebung(int type) {
         while (tt_stop > now()) {
           if (digitalRead(UNTEN_ENDSCHALTER)) {
             deb.dprintln("Error Probably Resolved");
-            ist.toorstatus = 0;
+            ist.toorstatus = closed;
             dc_stop();
             floating_state = false;
             return;
@@ -307,9 +307,9 @@ bool manual_control() {
   delay(2000);
   Serial.print("Pm_end_manual");
   if(!digitalRead(OBEN_ENDSCHALTER)){
-	  ist.toorstatus = 1;
+	  ist.toorstatus = open;
   } else if(!digitalRead(UNTEN_ENDSCHALTER)){
-	  ist.toorstatus = 0;
+	  ist.toorstatus = closed;
   } else{
 	  ist.toorstatus = soll.toorstatus;
   }

@@ -191,10 +191,10 @@ void setup() {
   dc_stop();
   if (!digitalRead(UNTEN_ENDSCHALTER)){
 	deb.dprintln(" CLOSED");
-	ist.toorstatus = 0;
+	ist.toorstatus = closed;
   }else {
 	deb.dprintln(" OPEN");
-	ist.toorstatus = 1;
+	ist.toorstatus = open;
   }
   delay(1000);
 #endif
@@ -223,7 +223,7 @@ void loop() {
   zeiten.loop_zeit = now();
 
   //GPS
-  if (zeiten.loop_zeit >= zeiten.GPS_wecker && !(ist.toorstatus == 2 || ist.toorstatus == 3)) {
+  if (zeiten.loop_zeit >= zeiten.GPS_wecker && !(ist.toorstatus == closing || ist.toorstatus == opening)) {
     gpsRefresh(); //kein refresh wenn sich das toor bewegt.
   }
     
@@ -252,12 +252,12 @@ void loop() {
   }
   
   else if(!digitalRead(INTERRUPT_PIN)){
-    soll.toorstatus = 1;
+    soll.toorstatus = open;
     zeiten.GPS_wecker = zeiten.loop_zeit + INTERRUPT_OVERRIDE_TIME;
     zeiten.Standard_wecker = zeiten.loop_zeit + INTERRUPT_OVERRIDE_TIME;
   }
   else if(!digitalRead(DIGITAL_I_3)){
-    soll.toorstatus = 0;
+    soll.toorstatus = closed;
     zeiten.GPS_wecker = zeiten.loop_zeit + INTERRUPT_OVERRIDE_TIME;
     zeiten.Standard_wecker = zeiten.loop_zeit + INTERRUPT_OVERRIDE_TIME;
   }
@@ -267,7 +267,11 @@ void loop() {
   if (zeiten.interrupt) {
     deb.dprintln("//==INTERRUPT==//");
     zeiten.interrupt = false;
-    soll.toorstatus = !(soll.toorstatus % 2);
+	if(soll.toorstatus == opening || soll.toorstatus == open){
+		soll.toorstatus = closed;
+	}else{
+		soll.toorstatus = open;
+	}
     soll.zaunstatus = off;
     zeiten.GPS_wecker = zeiten.loop_zeit + INTERRUPT_OVERRIDE_TIME;
     zeiten.Standard_wecker = zeiten.loop_zeit + INTERRUPT_OVERRIDE_TIME;

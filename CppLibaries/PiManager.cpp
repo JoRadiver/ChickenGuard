@@ -86,12 +86,12 @@ int PiManager::handleInput(){
 			this->log();
 			break;
 		case CommandName::open_door:
-			soll->toorstatus = 1;
+			soll->toorstatus = open;
 			zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			break;
 		case CommandName::close_door:
-			soll->toorstatus = 0;
+			soll->toorstatus = closed;
 			zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			break;
