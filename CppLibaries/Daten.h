@@ -2,8 +2,8 @@
 #define DATEN_HEADER
 #include <Arduino.h>
 
-struct DayTime{
-	enum {
+struct DayTimes{
+	enum DayTime{
 		before_sunrise = 0,
 		day = 1,
 		after_sunset = 2,
@@ -12,18 +12,18 @@ struct DayTime{
 };
 
 struct OnOffStates{
-	enum{
+	enum OnOffState{
 		off = 0,
 		on = 1
 	};
 };
 
-struct DoorState{
-	enum{
-		open = 1,
+struct DoorStates{
+	enum DoorState{
 		closed = 0,
+		open = 1,
 		closing = 2,
-		opening = 1
+		opening = 3
 	};
 }
 
@@ -41,7 +41,7 @@ struct Zeiten{
 	//Sonnenzeiten
 	unsigned long Sonnenaufgang;
 	unsigned long Sonnenuntergang;
-	byte Tageszeit;
+	DayTimes::DayTime Tageszeit;
 	
 	
 	void adjustTimes(long diff){

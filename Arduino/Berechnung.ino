@@ -15,16 +15,16 @@ void Standard_Calculations() {
   berechne_sonnenzeiten(zeiten.loop_zeit, kurzspeicher);
   zeiten.Tageszeit = berechne_tageszeit(kurzspeicher);
   switch (zeiten.Tageszeit) {
-    case 0:
+    case before_sunrise:
       zeiten.Sonnenaufgang = kurzspeicher[0];
       zeiten.Sonnenuntergang = kurzspeicher[1];
       break;
-    case 1:
+    case day:
       zeiten.Sonnenuntergang = kurzspeicher[1]; //Heutiger Abend
       berechne_sonnenzeiten(zeiten.loop_zeit + 86400, kurzspeicher);
       zeiten.Sonnenaufgang = kurzspeicher[0];  //Morgiger Morgen
       break;
-    case 2:
+    case after_sunset:
       berechne_sonnenzeiten(zeiten.loop_zeit + 86400, kurzspeicher);
       zeiten.Sonnenaufgang = kurzspeicher[0];
       zeiten.Sonnenuntergang = kurzspeicher[1];
@@ -32,7 +32,12 @@ void Standard_Calculations() {
     default:
       ist.fehler += 1;
   }
-  soll.toorstatus = zeiten.Tageszeit % 2;
+  if(zeiten.Tageszeit == day){
+	soll.toorstatus = 1;
+  }
+  else{
+	soll.toorstatus = 0;
+  }
   berechne_wecker();
 }
 
@@ -40,26 +45,26 @@ void Standard_Calculations() {
 //POST::Stellt die zeit ein wann die standard_Calculations funktion das nächste mal aufgerufen wird.
 void berechne_wecker() {
   switch (zeiten.Tageszeit) {
-    case 1:
+    case day:
       zeiten.Standard_wecker = zeiten.Sonnenuntergang + 30; //30 sekunden nach sonnenuntergang
       break;
-    case 2:
-    case 0:
+    case before_sunrise:
+    case after_sunset:
       zeiten.Standard_wecker = zeiten.Sonnenaufgang + 30; //30 sekunden nach sonnenaufgang
       break;
   }
 }
 
-//POST:: berechnet ob es Tag oder Nacht ist
-byte berechne_tageszeit(unsigned long* sonnenzeiten) {
+//POST:: returns the current DayTime
+DayTimes::DayTime berechne_tageszeit(unsigned long* sonnenzeiten) {
   unsigned long sonnenaufgang = sonnenzeiten[0];
   unsigned long sonnenuntergang = sonnenzeiten[1];
   if (zeiten.loop_zeit < sonnenaufgang)
-    return 0;
+    return DayTimes::before_sunrise;
   else if (zeiten.loop_zeit >= sonnenaufgang && zeiten.loop_zeit < sonnenuntergang)
-    return 1;
+    return DayTimes::day;
   else if (zeiten.loop_zeit >= sonnenuntergang)
-    return 2;
+    return DayTimes::after_sunset;
 }
 
 double grad(double rad) { //converts radians to degrees
