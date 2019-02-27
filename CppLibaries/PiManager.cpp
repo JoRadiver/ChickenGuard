@@ -5,33 +5,6 @@
 PiManager::PiManager(HardwareSerial* _pi, Zeiten* zt, ExtendedZustand* _ist, Zustand* _soll, DebugManager* _deb): pi(_pi), zeiten(zt), ist(_ist), soll(_soll), deb(_deb){}
 
 
-enum CommandType{
-	log = 1;
-	open_door = 2,
-	close_door = 2,
-	fence_on = 4,
-	fence_off = 5,
-	light_on = 6,
-	light_off = 7,
-	refresh_all = 8,
-	temparature = 9,
-	activate_debugging = 10,
-	deactivate_debugging = 11,
-	jump_to_manual_mode = 20,
-	respond_if_ready = 99
-}
-
-enum MessageType{ //the message type specifies to the server what the info represents
-	error = 'X',
-	quick_message = 'Q',
-	door_state = 'T',
-	fence_state = 'Z',
-	light_state = 'L',
-	temparature = 'C',
-	system_time = 'a',
-	next_sunrise_time = 'r',
-	next_sunset_time = 's'
-}
 
 
 
@@ -103,65 +76,65 @@ void PiManager::quick_report(char reason, String message){
 int PiManager::handleInput(){
 	//We will loop until we find a starting 's' character
 	while (pi->peek() != 's'){
-		if (pi->available() < 4){
+		if (pi->available() < 4){ //shortest command is 4 bytes
 			return 0; //To few bytes available, lets return to the program until we have new bytes
 		}
 		pi->read(); //Skim of any bytes which had no starting character
 	}
 	pi->read(); //consume the starting character
-	CommandType received_command = pi->read()*10 + pi->read();
+	byte received_command = pi->read()*10 + pi->read();
 	switch(received_command){
-		case log:
+		case CommandName::log:
 			this->log();
 			break;
-		case open_door:
+		case CommandName::open_door:
 			soll->toorstatus = 1;
 			zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			break;
-		case close_door:
+		case CommandName::close_door:
 			soll->toorstatus = 0;
 			zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			break;
-		case fence_on:
+		case CommandName::fence_on:
 			soll->zaunstatus = 1;
 			zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			break;
-		case fence_off:
+		case CommandName::fence_off:
 			soll->zaunstatus = 0;
 			zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			break;
-		case light_on:
+		case CommandName::light_on:
 			soll->lichtstatus = 1;
 			zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			break;
-		case light_off:
+		case CommandName::light_off:
 			soll->lichtstatus = 0;
 			zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			break;
-		case refresh_all:
+		case CommandName::refresh_all:
 			zeiten->GPS_wecker = zeiten->loop_zeit;
 			zeiten->Standard_wecker = zeiten->loop_zeit;
 			break;
-		case temparature:
+		case CommandName::temparature:
 			printTemp();
 			pi->println();
 			break;
-		case activate_debugging:
+		case CommandName::activate_debugging:
 			deb->activate();
 			break;
-		case deactivate_debugging:
+		case CommandName::deactivate_debugging:
 			deb->stop();
 			break;
-		case jump_to_manual_mode:
+		case CommandName::jump_to_manual_mode:
 			return -1; //return 1 to indicate manual mode
 			break;
-		case respond_if_ready:
+		case CommandName::respond_if_ready:
 			pi->print('S'); //Start Letter
 			pi->print('R'); //Ready
 			pi->print(';'); 
