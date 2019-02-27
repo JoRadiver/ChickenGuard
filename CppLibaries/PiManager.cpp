@@ -5,6 +5,28 @@
 PiManager::PiManager(HardwareSerial* _pi, Zeiten* zt, ExtendedZustand* _ist, Zustand* _soll, DebugManager* _deb): pi(_pi), zeiten(zt), ist(_ist), soll(_soll), deb(_deb){}
 
 
+enum CommandType{
+	log = 1;
+	open_door = 2,
+	close_door = 2,
+	fence_on = 4,
+	fence_off = 5,
+	light_on = 6,
+	light_off = 7,
+	refresh_all = 8,
+	temparature = 9,
+	activate_debugging = 10,
+	deactivate_debugging = 11,
+	jump_to_manual_mode = 20,
+	respond_if_ready = 99
+}
+
+enum MessageType{
+	
+}
+
+
+
 const char N_ERROR = 'X';
 const char N_QUICK = 'Q';
 const char N_TOOR = 'T';
