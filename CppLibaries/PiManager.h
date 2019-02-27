@@ -59,9 +59,6 @@ private:
 	void printLicht();
 	void printTemp();
 	void printZeit();
-	void sendTimeSpan(unsigned long span);
-	void sendDate(unsigned long time);
-	void sendTime(unsigned long time);
 	HardwareSerial *const pi;
 	Zeiten *const zeiten;
 	ExtendedZustand *const ist;
