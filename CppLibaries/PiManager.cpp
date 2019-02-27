@@ -21,8 +21,16 @@ enum CommandType{
 	respond_if_ready = 99
 }
 
-enum MessageType{
-	
+enum MessageType{ //the message type specifies to the server what the info represents
+	error = 'X',
+	quick_message = 'Q',
+	door_state = 'T',
+	fence_state = 'Z',
+	light_state = 'L',
+	temparature = 'C',
+	system_time = 'a',
+	next_sunrise_time = 'r',
+	next_sunset_time = 's'
 }
 
 
