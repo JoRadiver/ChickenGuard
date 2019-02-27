@@ -33,7 +33,7 @@ struct CommandName{
 	};
 };
 
-struct MessageName{
+struct MessageSpecifier{
 	enum{ //the message type specifies to the server what the info represents
 		error = 'X',
 		quick_message = 'Q',

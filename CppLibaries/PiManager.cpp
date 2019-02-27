@@ -6,8 +6,6 @@ PiManager::PiManager(HardwareSerial* _pi, Zeiten* zt, ExtendedZustand* _ist, Zus
 
 
 
-
-
 const char N_ERROR = 'X';
 const char N_QUICK = 'Q';
 const char N_TOOR = 'T';
@@ -38,29 +36,29 @@ void PiManager::log(){
 }
 
 void PiManager::printToor(){
-	pi->print(N_TOOR);
+	pi->print(MessageSpecifier::door_state);
 	pi->print(ist->toorstatus);
 	pi->print(';');
 }
 void PiManager::printZaun(){
-	pi->print(N_ZAUN);
+	pi->print(MessageSpecifier::fence_state);
 	pi->print(ist->zaunstatus);
 	pi->print(';');	
 }
 void PiManager::printLicht(){
-	pi->print(N_LICHT);
+	pi->print(MessageSpecifier::light_state);
 	pi->print(ist->lichtstatus);
 	pi->print(';');
 }
 void PiManager::printTemp(){
-	pi->print(N_TEMP);
+	pi->print(MessageSpecifier::temparature);
 	pi->print(ist->temparatur);
 	pi->print(';');
 }
 void PiManager::printZeit(){
-	pi->print(NU_AKTUELL);  pi->print(zeiten->loop_zeit); pi->print(';');
-	pi->print(NU_SONNENAUFGANG); pi->print(zeiten->Sonnenaufgang); pi->print(';');
-	pi->print(NU_SONNENUNTERGANG); pi->print(zeiten->Sonnenuntergang); pi->print(';');
+	pi->print(MessageSpecifier::system_time);  pi->print(zeiten->loop_zeit); pi->print(';');
+	pi->print(MessageSpecifier::next_sunrise_time); pi->print(zeiten->Sonnenaufgang); pi->print(';');
+	pi->print(MessageSpecifier::next_sunset_time); pi->print(zeiten->Sonnenuntergang); pi->print(';');
 }
 
 void PiManager::quick_report(char reason, String message){
