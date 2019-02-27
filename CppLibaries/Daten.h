@@ -2,6 +2,25 @@
 #define DATEN_HEADER
 #include <Arduino.h>
 
+enum DayTime{
+	before_sunrise = 0,
+	day = 1,
+	after_sunset = 2,
+	next_day = 3,
+}
+
+enum OnOffStates{
+	off = 0,
+	on = 1
+}
+
+enum DoorState{
+	open = 1,
+	closed = 0,
+	closing = 2,
+	opening = 1
+}
+
 struct Zeiten{
 	//Timers
 	unsigned long loop_zeit = 0;
