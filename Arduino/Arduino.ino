@@ -268,7 +268,7 @@ void loop() {
     deb.dprintln("//==INTERRUPT==//");
     zeiten.interrupt = false;
     soll.toorstatus = !(soll.toorstatus % 2);
-    soll.zaunstatus = 0;
+    soll.zaunstatus = off;
     zeiten.GPS_wecker = zeiten.loop_zeit + INTERRUPT_OVERRIDE_TIME;
     zeiten.Standard_wecker = zeiten.loop_zeit + INTERRUPT_OVERRIDE_TIME;
   }

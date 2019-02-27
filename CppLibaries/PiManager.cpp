@@ -96,22 +96,22 @@ int PiManager::handleInput(){
 			zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			break;
 		case CommandName::fence_on:
-			soll->zaunstatus = 1;
+			soll->zaunstatus = on;
 			zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			break;
 		case CommandName::fence_off:
-			soll->zaunstatus = 0;
+			soll->zaunstatus = off;
 			zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			break;
 		case CommandName::light_on:
-			soll->lichtstatus = 1;
+			soll->lichtstatus = on;
 			zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			break;
 		case CommandName::light_off:
-			soll->lichtstatus = 0;
+			soll->lichtstatus = off;
 			zeiten->Standard_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			zeiten->GPS_wecker = zeiten->loop_zeit + PI_OVERRIDE_TIME;
 			break;
