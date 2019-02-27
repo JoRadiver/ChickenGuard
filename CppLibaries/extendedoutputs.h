@@ -10,13 +10,10 @@ class ExtendedOutput{
 public:
 	ExtendedOutput(int _latch, int _data, int _clock);
 	//POST:: Pin is immediately set. requires some time
-	
 	void digital_Write(unsigned int pin, bool value);
 	//POST:: sets a pin in the sendbyte. Only has an effect when it is sent, by caling push()
-	
 	void digitalSet(unsigned int pin, bool value);
-	//POST:: sends the outbyte
-	
+	//POST:: sends the outbyte	
 	void push();
 	//POST:: Sets sendbyte for the stepper to do a step in the given direction. only executed when send is called
 	void setStep(bool dir);
